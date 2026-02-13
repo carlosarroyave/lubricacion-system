@@ -16,7 +16,7 @@ class Settings(BaseSettings):
     @property
     def DATABASE_URL(self) -> str:
         """Construye la URL de conexión a partir de variables separadas"""
-        return f"postgresql://{self.DB_USER}:{self.DB_PASSWORD}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
+        return f"postgresql://{self.DB_USER}:{self.DB_PASSWORD}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}?sslmode=require"
     
     # API
     API_TITLE: str = "Gestión de Lubricación API"
