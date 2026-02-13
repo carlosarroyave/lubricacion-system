@@ -22,7 +22,7 @@
 
 **2.2** Sign Up (recomendado con GitHub)
 
-**2.3** Click en "+  New" → "Web Service"
+**2.3** Click en "+New" → "Web Service"
 
 **2.4** Conecta tu repositorio:
 - Busca: `lubricacion-system`
@@ -32,7 +32,7 @@
 - **Name:** `lubricacion-api`
 - **Environment:** `Python 3`
 - **Build Command:** `pip install -r requirements.txt`
-- **Start Command:** `uvicorn app.main:app --host 0.0.0.0 --port 8000`
+- **Start Command:** `bash start.sh`
 - **Plan:** Free (sin crédito)
 
 **2.6** Environmental Variables (muy importante):
