@@ -73,7 +73,7 @@ def crear_equipo(equipo_data: dict):
         response.raise_for_status()
         return response.json(), True
     except Exception as e:
-        return None, False, str(e)
+        return None, False
 
 def obtener_planes_proximos(dias: int = 7):
     """Obtener planes de lubricación próximos"""
@@ -84,10 +84,10 @@ def obtener_planes_proximos(dias: int = 7):
             timeout=10
         )
         response.raise_for_status()
-        return response.json()
+        return response.json(), True
     except Exception as e:
         st.error(f"Error al obtener planes: {str(e)}")
-        return []
+        return [], False
 
 def registrar_lubricacion(plan_id: int, data: dict):
     """Registrar ejecución de lubricación"""
@@ -272,12 +272,12 @@ else:
                 "cantidad_gramos": cantidad,
                 "frecuencia_dias": frec
             }
-            result, success, *error = crear_equipo(data) + (None,)
+            result, success = crear_equipo(data)
             if success:
                 st.success("✅ Equipo registrado")
                 st.rerun()
             else:
-                st.error(f"Error: {error[0] if error else 'desconocido'}")
+                st.error("Error al registrar equipo")
     
     # ==================== TAB 3: INVENTARIO ====================
     with tab3:
