@@ -23,8 +23,9 @@ class Settings(BaseSettings):
         "http://localhost:8000",
         "http://127.0.0.1:8501",
         "http://127.0.0.1:8000",
-        "https://*.streamlit.app",  # Streamlit Cloud
+        "https://*.streamlit.app",  # Streamlit Cloud - todos los subdominios
         "https://streamlit.app",
+        "*",  # Permitir todos los orígenes (uso corporativo)
     ]
     
     # JWT
