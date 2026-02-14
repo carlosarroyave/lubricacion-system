@@ -44,6 +44,7 @@ def eliminar_equipo(equipo_id: int) -> bool:
         return False
 
 def obtener_planes_proximos(dias: int = 7):
+    """Obtener planes de lubricación próximos"""
     try:
         response = requests.get(
             f"{API_URL}/api/lubricacion/planes/proximos",
@@ -52,7 +53,8 @@ def obtener_planes_proximos(dias: int = 7):
         )
         response.raise_for_status()
         return response.json(), True
-    except Exception:
+    except Exception as e:
+        st.error(f"Error al obtener planes: {str(e)}")
         return None, False
 
 def registrar_ejecucion(plan_id: int, tecnico: str, cantidad: float, observaciones: str = "") -> bool:
@@ -131,49 +133,48 @@ else:
     with tab1:
         st.header("📅 Pool de Lubricación - Pendientes")
         
-        planes = obtener_planes_proximos(dias=7)
+        planes_data, ok = obtener_planes_proximos(dias=7)
         
-        if not planes:
-            st.warning("No se pudieron cargar los planes.")
+        if not ok or not planes_data:
+            st.info("✅ No hay equipos pendientes de lubricar")
         else:
-            planes_data = planes[0]
-            if len(planes_data) == 0:
-                st.info("✅ No hay planes pendientes en los próximos 7 días.")
-            else:
-                st.write(f"**Planes próximos:** {len(planes_data)}")
-                for plan in planes_data:
-                    dias_restantes = plan.get("dias_restantes", 0)
-                    if dias_restantes <= 0:
-                        estado_emoji = "🔴 Urgente"
-                    elif dias_restantes <= 2:
-                        estado_emoji = "🟡 Próximo"
-                    else:
-                        estado_emoji = "🟢 Normal"
+            st.write(f"**{len(planes_data)} equipo(s) requieren atención**")
+            
+            # Agrupar por criticidad
+            criticos = [p for p in planes_data if p['criticidad'] == 'A']
+            medios = [p for p in planes_data if p['criticidad'] == 'B']
+            bajos = [p for p in planes_data if p['criticidad'] == 'C']
+            
+            # Resumen
+            st.write(f"🔴 Criticos: {len(criticos)} | 🟡 Medios: {len(medios)} | 🟢 Bajos: {len(bajos)}")
+            
+            # Mostrar planes
+            for idx, plan in enumerate(planes_data):
+                with st.expander(f"{plan['equipo_nombre']} - {plan['proxima_fecha_lubricacion']}"):
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        st.write(f"**Equipo:** {plan['equipo_nombre']}")
+                        st.write(f"**Ubicación:** {plan['equipo_ubicacion']}")
+                        st.write(f"**Componente:** {plan['equipo_componente']}")
+                        st.write(f"**Criticidad:** {plan['criticidad']}")
+                    with col2:
+                        st.write(f"**Tipo Lubricante:** {plan['tipo_lubricante']}")
+                        st.write(f"**Cantidad (g):** {plan['cantidad_gramos']}")
+                        st.write(f"**Frecuencia (días):** {plan['frecuencia_dias']}")
+                        st.write(f"**Última lubricación:** {plan['ultima_fecha_lubricacion']}")
                     
-                    with st.expander(f"{plan['equipo_nombre']} - {plan['proxima_fecha_lubricacion']} ({estado_emoji})"):
-                        col1, col2 = st.columns(2)
-                        with col1:
-                            st.subheader(estado_emoji)
-                            st.write(f"**Equipo:** {plan['equipo_nombre']}")
-                            st.write(f"**Ubicación:** {plan['equipo_ubicacion']}")
-                            st.write(f"**Tipo Lubricante:** {plan['tipo_lubricante']}")
-                        with col2:
-                            st.write(f"**Cantidad:** {plan['cantidad_gramos']} g")
-                            st.write(f"**Frecuencia:** {plan['frecuencia_dias']} días")
-                            st.write(f"**Última ejecución:** {plan['ultima_fecha_lubricacion']}")
-                        
-                        st.divider()
-                        st.subheader("📝 Registrar Ejecución")
-                        tecnico = st.text_input("Técnico", key=f"tecnico_{plan['id']}")
-                        cantidad = st.number_input("Cantidad aplicada (g)", min_value=0.0, value=float(plan['cantidad_gramos']), key=f"cantidad_{plan['id']}")
-                        observaciones = st.text_area("Observaciones", key=f"obs_{plan['id']}")
-                        if st.button("✅ Registrar", key=f"btn_{plan['id']}"):
-                            if tecnico:
-                                if registrar_ejecucion(plan['id'], tecnico, cantidad, observaciones):
-                                    st.success("✅ Ejecución registrada")
-                                    st.rerun()
-                            else:
-                                st.warning("Debe ingresar el técnico")
+                    st.subheader("📝 Registrar Ejecución")
+                    tecnico = st.text_input("Técnico", key=f"tecnico_{idx}")
+                    cantidad = st.number_input("Cantidad aplicada (g)", min_value=0.0, value=plan['cantidad_gramos'], key=f"cantidad_{idx}")
+                    observaciones = st.text_area("Observaciones", key=f"obs_{idx}")
+                    
+                    if st.button("✅ Registrar", key=f"btn_{idx}"):
+                        if tecnico:
+                            if registrar_ejecucion(plan['id'], tecnico, cantidad, observaciones):
+                                st.success("✅ Ejecución registrada")
+                                st.rerun()
+                        else:
+                            st.warning("⚠️ Ingrese el nombre del técnico")
 
     # ==================== TAB 2: NUEVO EQUIPO ====================
     with tab2:
