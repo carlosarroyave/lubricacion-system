@@ -8,7 +8,7 @@ from typing import Optional
 class UsuarioBase(BaseModel):
     nombre: str = Field(..., min_length=1, max_length=100)
     email: EmailStr
-    rol: str = Field("tecnico", regex="^(admin|supervisor|tecnico)$")
+    rol: str = Field("tecnico", pattern="^(admin|supervisor|tecnico)$")
 
 class UsuarioCreate(UsuarioBase):
     password: str = Field(..., min_length=6)
