@@ -1,13 +1,15 @@
 """
 Aplicación principal FastAPI
 """
+import sys
+import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import logging
 
-from app.core.config import settings
-from app.core.database import init_db
-from app.routes import health
+from backend.app.core.config import settings
+from backend.app.core.database import init_db
+from backend.app.routes import health
 
 # Configurar logging
 logging.basicConfig(
@@ -54,7 +56,7 @@ async def shutdown_event():
 # Incluir routers
 app.include_router(health.router)
 try:
-    from app.routes import equipos, lubricacion
+    from backend.app.routes import equipos, lubricacion
     app.include_router(equipos.router)
     app.include_router(lubricacion.router)
 except Exception as e:
@@ -82,7 +84,7 @@ async def general_exception_handler(request, exc):
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(
-        "app.main:app",
+        "backend.app.main:app",
         host="0.0.0.0",
         port=8000,
         reload=True
