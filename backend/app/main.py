@@ -7,6 +7,7 @@ import logging
 
 from app.core.config import settings
 from app.core.database import init_db
+from app.routes import health
 
 # Configurar logging
 logging.basicConfig(
@@ -50,6 +51,15 @@ async def shutdown_event():
     """Evento de cierre"""
     logger.info("Cerrando aplicación...")
 
+# Incluir routers
+app.include_router(health.router)
+try:
+    from app.routes import equipos, lubricacion
+    app.include_router(equipos.router)
+    app.include_router(lubricacion.router)
+except Exception as e:
+    logger.error("Error cargando rutas de equipos/lubricacion", exc_info=True)
+
 # Root endpoint
 @app.get("/")
 async def root():
@@ -60,14 +70,13 @@ async def root():
         "docs": "/api/docs"
     }
 
-@app.get("/api/health")
-async def health_check():
-    """Health check endpoint"""
-    from datetime import datetime
+# Error handlers
+@app.exception_handler(Exception)
+async def general_exception_handler(request, exc):
+    logger.error(f"Error no manejado: {str(exc)}")
     return {
-        "status": "healthy",
-        "timestamp": datetime.utcnow().isoformat(),
-        "database": "connected"
+        "error": "Error interno del servidor",
+        "detail": str(exc)
     }
 
 if __name__ == "__main__":
