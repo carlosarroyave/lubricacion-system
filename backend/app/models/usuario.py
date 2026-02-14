@@ -27,3 +27,6 @@ class Usuario(Base):
     def verify_password(self, password: str) -> bool:
         """Verificar contraseña"""
         return pwd_context.verify(password, self.password_hash)
+    
+    def __repr__(self):
+        return f"<Usuario {self.email}>"
