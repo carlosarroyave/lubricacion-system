@@ -1,3 +1,6 @@
+"""
+Aplicación Principal - Streamlit
+"""
 import streamlit as st
 import requests
 import pandas as pd
@@ -5,43 +8,72 @@ from datetime import datetime, timedelta
 from typing import Optional
 import os
 
-# ==================== CONFIG ====================
-API_URL = os.getenv("API_URL", "http://localhost:8000")
+# ==================== CONFIGURACIÓN ====================
+# En Streamlit Cloud, usar secrets. En local, usar env
+try:
+    API_URL = st.secrets.get("API_URL", "").strip()
+    if not API_URL:
+        raise ValueError("API_URL vacío en secrets")
+except Exception as e:
+    API_URL = os.getenv("API_URL", "https://lubricacion-api.onrender.com")
 
-# ==================== HELPERS ====================
-def get_health_check():
+# Debug: mostrar URL en desarrollo
+if os.getenv("STREAMLIT_ENV") == "dev":
+    st.sidebar.write(f"🔗 API URL: {API_URL}")
+st.set_page_config(
+    page_title="Gestión Lubricación",
+    page_icon="🔧",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
+# ==================== ESTILOS ====================
+st.markdown("""
+    <style>
+    .main {
+        padding: 2rem 1rem;
+    }
+    .stMetric {
+        background-color: #f0f2f6;
+        padding: 1rem;
+        border-radius: 0.5rem;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+# ==================== FUNCIONES DE API ====================
+def get_health_check() -> bool:
+    """Verificar conexión a API"""
     try:
-        response = requests.get(f"{API_URL}/api/health", timeout=5)
-        response.raise_for_status()
-        return response.json().get("status") == "healthy"
-    except Exception:
+        url = f"{API_URL}/api/health"
+        response = requests.get(url, timeout=5)
+        return response.status_code == 200
+    except Exception as e:
+        st.sidebar.error(f"❌ Error de conexión: {str(e)}\n🔗 URL: {API_URL}/api/health")
         return False
 
-def obtener_equipos():
+def get_equipos():
+    """Obtener lista de equipos"""
     try:
         response = requests.get(f"{API_URL}/api/equipos", timeout=10)
         response.raise_for_status()
+        return response.json()
+    except Exception as e:
+        st.error(f"Error al obtener equipos: {str(e)}")
+        return []
+
+def crear_equipo(equipo_data: dict):
+    """Crear nuevo equipo"""
+    try:
+        response = requests.post(
+            f"{API_URL}/api/equipos",
+            json=equipo_data,
+            timeout=10
+        )
+        response.raise_for_status()
         return response.json(), True
     except Exception as e:
-        return None, False
-
-def crear_equipo(data: dict) -> bool:
-    try:
-        response = requests.post(f"{API_URL}/api/equipos", json=data, timeout=10)
-        response.raise_for_status()
-        return True
-    except Exception as e:
-        st.error(f"Error al crear equipo: {str(e)}")
-        return False
-
-def eliminar_equipo(equipo_id: int) -> bool:
-    try:
-        response = requests.delete(f"{API_URL}/api/equipos/{equipo_id}", timeout=10)
-        response.raise_for_status()
-        return True
-    except Exception as e:
-        st.error(f"Error al eliminar equipo: {str(e)}")
-        return False
+        return None, False, str(e)
 
 def obtener_planes_proximos(dias: int = 7):
     """Obtener planes de lubricación próximos"""
@@ -52,34 +84,22 @@ def obtener_planes_proximos(dias: int = 7):
             timeout=10
         )
         response.raise_for_status()
-        return response.json(), True
+        return response.json()
     except Exception as e:
         st.error(f"Error al obtener planes: {str(e)}")
-        return None, False
+        return []
 
-def registrar_ejecucion(plan_id: int, tecnico: str, cantidad: float, observaciones: str = "") -> bool:
+def registrar_lubricacion(plan_id: int, data: dict):
+    """Registrar ejecución de lubricación"""
     try:
         response = requests.post(
             f"{API_URL}/api/lubricacion/ejecutar/{plan_id}",
-            json={
-                "tecnico": tecnico,
-                "cantidad_aplicada": cantidad,
-                "observaciones": observaciones
-            },
+            json=data,
             timeout=10
         )
         response.raise_for_status()
-        return True
-    except Exception as e:
-        st.error(f"Error al registrar: {str(e)}")
-        return False
-
-def obtener_historial():
-    try:
-        response = requests.get(f"{API_URL}/api/lubricacion/historial", timeout=10)
-        response.raise_for_status()
         return response.json(), True
-    except Exception:
+    except Exception as e:
         return None, False
 
 def calcular_skf(diametro: float, ancho: float) -> Optional[float]:
@@ -145,114 +165,176 @@ else:
             medios = [p for p in planes_data if p['criticidad'] == 'B']
             bajos = [p for p in planes_data if p['criticidad'] == 'C']
             
-            # Resumen
-            st.write(f"🔴 Criticos: {len(criticos)} | 🟡 Medios: {len(medios)} | 🟢 Bajos: {len(bajos)}")
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                st.metric("🔴 Críticos", len(criticos))
+            with col2:
+                st.metric("🟡 Medios", len(medios))
+            with col3:
+                st.metric("🟢 Bajos", len(bajos))
+            
+            st.markdown("---")
             
             # Mostrar planes
             for idx, plan in enumerate(planes_data):
-                with st.expander(f"{plan['equipo_nombre']} - {plan['proxima_fecha_lubricacion']}"):
-                    col1, col2 = st.columns(2)
+                with st.container():
+                    col1, col2, col3, col4 = st.columns([2, 2, 1.5, 1], gap="small")
+                    
                     with col1:
-                        st.write(f"**Equipo:** {plan['equipo_nombre']}")
-                        st.write(f"**Ubicación:** {plan['equipo_ubicacion']}")
-                        st.write(f"**Componente:** {plan['equipo_componente']}")
-                        st.write(f"**Criticidad:** {plan['criticidad']}")
+                        st.markdown(f"### {plan['equipo_nombre']}")
+                        st.caption(f"Plan ID: {plan['id']}")
+                    
                     with col2:
-                        st.write(f"**Tipo Lubricante:** {plan['tipo_lubricante']}")
-                        st.write(f"**Cantidad (g):** {plan['cantidad_gramos']}")
-                        st.write(f"**Frecuencia (días):** {plan['frecuencia_dias']}")
-                        st.write(f"**Última lubricación:** {plan['ultima_fecha_lubricacion']}")
+                        st.markdown(f"**Lubricante:** {plan['tipo_lubricante']}")
+                        st.caption(f"**Cantidad:** {plan['cantidad_gramos']}g")
                     
-                    st.subheader("📝 Registrar Ejecución")
-                    tecnico = st.text_input("Técnico", key=f"tecnico_{idx}")
-                    cantidad = st.number_input("Cantidad aplicada (g)", min_value=0.0, value=plan['cantidad_gramos'], key=f"cantidad_{idx}")
-                    observaciones = st.text_area("Observaciones", key=f"obs_{idx}")
+                    with col3:
+                        st.metric("Próxima", plan['proxima_fecha'][:10])
+                        st.caption(f"Días: {plan['dias_restantes']}")
                     
-                    if st.button("✅ Registrar", key=f"btn_{idx}"):
-                        if tecnico:
-                            if registrar_ejecucion(plan['id'], tecnico, cantidad, observaciones):
-                                st.success("✅ Ejecución registrada")
+                    with col4:
+                        estado_emoji = plan['estado']
+                        st.subheader(estado_emoji)
+                    
+                    if st.button("✅ Registrar", key=f"btn_{plan['id']}"):
+                        st.session_state[f"modal_{plan['id']}"] = True
+                    
+                    # Modal
+                    if st.session_state.get(f"modal_{plan['id']}", False):
+                        st.markdown("---")
+                        st.subheader("📝 Registrar Ejecución")
+                        
+                        col1, col2 = st.columns(2)
+                        with col1:
+                            fecha = st.date_input("Fecha", datetime.now(), key=f"fecha_{plan['id']}")
+                        with col2:
+                            cantidad = st.number_input(
+                                "Cantidad aplicada (g)",
+                                value=float(plan['cantidad_gramos']),
+                                min_value=0.0,
+                                key=f"cant_{plan['id']}"
+                            )
+                        
+                        tecnico = st.text_input("Técnico", key=f"tech_{plan['id']}")
+                        obs = st.text_area("Observaciones", key=f"obs_{plan['id']}")
+                        
+                        col1, col2 = st.columns(2)
+                        with col1:
+                            if st.button("💾 Guardar", key=f"save_{plan['id']}"):
+                                data = {
+                                    "plan_id": plan['id'],
+                                    "cantidad_aplicada": cantidad,
+                                    "tecnico": tecnico,
+                                    "observaciones": obs,
+                                    "fecha_ejecucion": fecha.isoformat()
+                                }
+                                result, success = registrar_lubricacion(plan['id'], data)
+                                if success:
+                                    st.success("✅ Lubricación registrada")
+                                    st.session_state[f"modal_{plan['id']}"] = False
+                                    st.rerun()
+                                else:
+                                    st.error("Error al guardar")
+                        
+                        with col2:
+                            if st.button("❌ Cancelar", key=f"cancel_{plan['id']}"):
+                                st.session_state[f"modal_{plan['id']}"] = False
                                 st.rerun()
-                        else:
-                            st.warning("⚠️ Ingrese el nombre del técnico")
-
+                        
+                        st.markdown("---")
+    
     # ==================== TAB 2: NUEVO EQUIPO ====================
     with tab2:
         st.header("➕ Registrar Nuevo Equipo")
         
-        with st.form("nuevo_equipo"):
-            col1, col2 = st.columns(2)
-            with col1:
-                nombre = st.text_input("Nombre del equipo")
-                componente = st.text_input("Componente")
-                ubicacion = st.text_input("Ubicación")
-                criticidad = st.selectbox("Criticidad", ["A", "B", "C"])
-            with col2:
-                modelo_rodamiento = st.text_input("Modelo de Rodamiento")
-                tipo_lubricante = st.text_input("Tipo de Lubricante")
-                cantidad = st.number_input("Cantidad (g)", min_value=0.0, value=10.0)
-                frecuencia = st.number_input("Frecuencia (días)", min_value=1, value=30)
-            
-            submitted = st.form_submit_button("Guardar")
-            if submitted:
-                data = {
-                    "nombre": nombre,
-                    "componente": componente,
-                    "ubicacion": ubicacion,
-                    "criticidad": criticidad,
-                    "modelo_rodamiento": modelo_rodamiento,
-                    "tipo_lubricante": tipo_lubricante,
-                    "cantidad_gramos": cantidad,
-                    "frecuencia_dias": frecuencia
-                }
-                if crear_equipo(data):
-                    st.success("✅ Equipo creado correctamente")
-
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            nombre = st.text_input("Nombre del equipo")
+            critico = st.selectbox("Criticidad", ["A", "B", "C"])
+            tipo_lub = st.text_input("Tipo lubricante")
+            frec = st.number_input("Frecuencia (días)", min_value=1, value=30)
+        
+        with col2:
+            componente = st.text_input("Componente")
+            ubicacion = st.text_input("Ubicación")
+            modelo = st.text_input("Modelo rodamiento")
+            cantidad = st.number_input("Cantidad (g)", min_value=0.0, value=15.0)
+        
+        if st.button("✅ Registrar Equipo", use_container_width=True):
+            data = {
+                "nombre": nombre,
+                "componente": componente,
+                "criticidad": critico,
+                "ubicacion": ubicacion,
+                "modelo_rodamiento": modelo,
+                "tipo_lubricante": tipo_lub,
+                "cantidad_gramos": cantidad,
+                "frecuencia_dias": frec
+            }
+            result, success, *error = crear_equipo(data) + (None,)
+            if success:
+                st.success("✅ Equipo registrado")
+                st.rerun()
+            else:
+                st.error(f"Error: {error[0] if error else 'desconocido'}")
+    
     # ==================== TAB 3: INVENTARIO ====================
     with tab3:
         st.header("📦 Inventario de Equipos")
-        equipos = obtener_equipos()
+        
+        equipos = get_equipos()
         if equipos:
-            equipos_data = equipos[0]
-            if len(equipos_data) == 0:
-                st.info("No hay equipos registrados.")
-            else:
-                df = pd.DataFrame(equipos_data)
-                st.dataframe(df)
-                
-                st.subheader("🗑 Eliminar Equipo")
-                equipo_id = st.number_input("ID del Equipo", min_value=1, value=1)
-                if st.button("Eliminar"):
-                    if eliminar_equipo(equipo_id):
-                        st.success("✅ Equipo eliminado")
-                        st.rerun()
-
+            df = pd.DataFrame(equipos)
+            st.dataframe(
+                df[['id', 'nombre', 'componente', 'criticidad', 'ubicacion', 'estado']],
+                use_container_width=True,
+                hide_index=True
+            )
+            
+            st.download_button(
+                "📥 Descargar CSV",
+                data=df.to_csv(index=False),
+                file_name=f"equipos_{datetime.now().strftime('%Y%m%d')}.csv",
+                mime="text/csv"
+            )
+        else:
+            st.info("No hay equipos registrados")
+    
     # ==================== TAB 4: HISTORIAL ====================
     with tab4:
         st.header("📈 Historial de Lubricación")
-        historial = obtener_historial()
-        if historial:
-            hist_data = historial[0]
-            if len(hist_data) == 0:
-                st.info("No hay registros de historial.")
-            else:
-                df = pd.DataFrame(hist_data)
-                st.dataframe(df)
+        
+        try:
+            response = requests.get(f"{API_URL}/api/lubricacion/historial", timeout=10)
+            response.raise_for_status()
+            historial = response.json()
+            
+            if historial:
+                df = pd.DataFrame(historial)
+                st.dataframe(df, use_container_width=True, hide_index=True)
+                
                 st.download_button(
                     "📥 Descargar CSV",
-                    data=df.to_csv(index=False).encode("utf-8"),
-                    file_name="historial_lubricacion.csv",
+                    data=df.to_csv(index=False),
+                    file_name=f"historial_{datetime.now().strftime('%Y%m%d')}.csv",
                     mime="text/csv"
                 )
-
+            else:
+                st.info("No hay registros en el historial")
+        except Exception as e:
+            st.error(f"Error: {str(e)}")
+    
     # ==================== TAB 5: HERRAMIENTAS ====================
     with tab5:
-        st.header("⚙️ Herramientas de Cálculo")
+        st.header("⚙️ Herramientas")
         
-        sub1, sub2 = st.tabs(["🧮 Calculadora SKF", "ℹ️ Información"])
+        sub1, sub2 = st.tabs(["Calculadora SKF", "Información"])
         
         with sub1:
             st.subheader("🧮 Calculadora SKF")
+            st.write("Fórmula: **G = 0.005 × D × B**")
+            
             col1, col2 = st.columns(2)
             with col1:
                 diametro = st.number_input("Diámetro (mm)", min_value=0.0, value=20.0)
