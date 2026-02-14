@@ -102,6 +102,31 @@ def registrar_lubricacion(plan_id: int, data: dict):
     except Exception as e:
         return None, False
 
+def actualizar_equipo(equipo_id: int, equipo_data: dict):
+    """Actualizar equipo existente"""
+    try:
+        response = requests.put(
+            f"{API_URL}/api/equipos/{equipo_id}",
+            json=equipo_data,
+            timeout=10
+        )
+        response.raise_for_status()
+        return response.json(), True
+    except Exception as e:
+        return None, False
+
+def eliminar_equipo(equipo_id: int):
+    """Eliminar (desactivar) equipo"""
+    try:
+        response = requests.delete(
+            f"{API_URL}/api/equipos/{equipo_id}",
+            timeout=10
+        )
+        response.raise_for_status()
+        return True
+    except Exception as e:
+        return False
+
 def calcular_skf(diametro: float, ancho: float) -> Optional[float]:
     """Calcular cantidad según fórmula SKF"""
     try:
@@ -198,86 +223,125 @@ else:
                     
                     if st.button("✅ Registrar", key=f"btn_{plan['id']}"):
                         st.session_state[f"modal_{plan['id']}"] = True
+                
+                # Modal
+                if st.session_state.get(f"modal_{plan['id']}", False):
+                    st.markdown("---")
+                    st.subheader("📝 Registrar Ejecución")
                     
-                    # Modal
-                    if st.session_state.get(f"modal_{plan['id']}", False):
-                        st.markdown("---")
-                        st.subheader("📝 Registrar Ejecución")
-                        
-                        col1, col2 = st.columns(2)
-                        with col1:
-                            fecha = st.date_input("Fecha", datetime.now(), key=f"fecha_{plan['id']}")
-                        with col2:
-                            cantidad = st.number_input(
-                                "Cantidad aplicada (g)",
-                                value=float(plan['cantidad_gramos']),
-                                min_value=0.0,
-                                key=f"cant_{plan['id']}"
-                            )
-                        
-                        tecnico = st.text_input("Técnico", key=f"tech_{plan['id']}")
-                        obs = st.text_area("Observaciones", key=f"obs_{plan['id']}")
-                        
-                        col1, col2 = st.columns(2)
-                        with col1:
-                            if st.button("💾 Guardar", key=f"save_{plan['id']}"):
-                                data = {
-                                    "plan_id": plan['id'],
-                                    "cantidad_aplicada": cantidad,
-                                    "tecnico": tecnico,
-                                    "observaciones": obs,
-                                    "fecha_ejecucion": fecha.isoformat()
-                                }
-                                result, success = registrar_lubricacion(plan['id'], data)
-                                if success:
-                                    st.success("✅ Lubricación registrada")
-                                    st.session_state[f"modal_{plan['id']}"] = False
-                                    st.rerun()
-                                else:
-                                    st.error("Error al guardar")
-                        
-                        with col2:
-                            if st.button("❌ Cancelar", key=f"cancel_{plan['id']}"):
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        fecha = st.date_input("Fecha", datetime.now(), key=f"fecha_{plan['id']}")
+                    with col2:
+                        cantidad = st.number_input(
+                            "Cantidad aplicada (g)",
+                            value=float(plan['cantidad_gramos']),
+                            min_value=0.0,
+                            key=f"cant_{plan['id']}"
+                        )
+                    
+                    tecnico = st.text_input("Técnico", key=f"tech_{plan['id']}")
+                    obs = st.text_area("Observaciones", key=f"obs_{plan['id']}")
+                    
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        if st.button("💾 Guardar", key=f"save_{plan['id']}"):
+                            data = {
+                                "plan_id": plan['id'],
+                                "cantidad_aplicada": cantidad,
+                                "tecnico": tecnico,
+                                "observaciones": obs,
+                                "fecha_ejecucion": fecha.isoformat()
+                            }
+                            result, success = registrar_lubricacion(plan['id'], data)
+                            if success:
+                                st.success("✅ Lubricación registrada")
                                 st.session_state[f"modal_{plan['id']}"] = False
                                 st.rerun()
-                        
-                        st.markdown("---")
+                            else:
+                                st.error("Error al guardar")
+                    
+                    with col2:
+                        if st.button("❌ Cancelar", key=f"cancel_{plan['id']}"):
+                            st.session_state[f"modal_{plan['id']}"] = False
+                            st.rerun()
+                    
+                    st.markdown("---")
     
     # ==================== TAB 2: NUEVO EQUIPO ====================
     with tab2:
         st.header("➕ Registrar Nuevo Equipo")
         
+        # Inicializar session state para los campos
+        if "nombre_eq" not in st.session_state:
+            st.session_state.nombre_eq = ""
+            st.session_state.componente_eq = ""
+            st.session_state.critico_eq = "B"
+            st.session_state.ubicacion_eq = ""
+            st.session_state.modelo_eq = ""
+            st.session_state.tipo_lub_eq = ""
+            st.session_state.cantidad_eq = 15.0
+            st.session_state.frec_eq = 30
+        
         col1, col2 = st.columns(2)
         
         with col1:
-            nombre = st.text_input("Nombre del equipo")
-            critico = st.selectbox("Criticidad", ["A", "B", "C"])
-            tipo_lub = st.text_input("Tipo lubricante")
-            frec = st.number_input("Frecuencia (días)", min_value=1, value=30)
+            nombre = st.text_input("Nombre del equipo", value=st.session_state.nombre_eq, key="nombre_input")
+            critico = st.selectbox("Criticidad", ["A", "B", "C"], index=["A", "B", "C"].index(st.session_state.critico_eq), key="critico_input")
+            tipo_lub = st.text_input("Tipo lubricante", value=st.session_state.tipo_lub_eq, key="tipo_input")
+            frec = st.number_input("Frecuencia (días)", min_value=1, value=st.session_state.frec_eq, key="frec_input")
         
         with col2:
-            componente = st.text_input("Componente")
-            ubicacion = st.text_input("Ubicación")
-            modelo = st.text_input("Modelo rodamiento")
-            cantidad = st.number_input("Cantidad (g)", min_value=0.0, value=15.0)
+            componente = st.text_input("Componente", value=st.session_state.componente_eq, key="comp_input")
+            ubicacion = st.text_input("Ubicación", value=st.session_state.ubicacion_eq, key="ubi_input")
+            modelo = st.text_input("Modelo rodamiento", value=st.session_state.modelo_eq, key="modelo_input")
+            cantidad = st.number_input("Cantidad (g)", min_value=0.0, value=st.session_state.cantidad_eq, key="cant_input")
         
-        if st.button("✅ Registrar Equipo", use_container_width=True):
-            data = {
-                "nombre": nombre,
-                "componente": componente,
-                "criticidad": critico,
-                "ubicacion": ubicacion,
-                "modelo_rodamiento": modelo,
-                "tipo_lubricante": tipo_lub,
-                "cantidad_gramos": cantidad,
-                "frecuencia_dias": frec
-            }
-            result, success = crear_equipo(data)
-            if success:
-                st.success("✅ Equipo registrado")
+        col_btn1, col_btn2 = st.columns(2)
+        
+        with col_btn1:
+            if st.button("✅ Registrar Equipo", use_container_width=True):
+                if not nombre.strip():
+                    st.error("❌ El nombre del equipo es obligatorio")
+                else:
+                    data = {
+                        "nombre": nombre,
+                        "componente": componente,
+                        "criticidad": critico,
+                        "ubicacion": ubicacion,
+                        "modelo_rodamiento": modelo,
+                        "tipo_lubricante": tipo_lub,
+                        "cantidad_gramos": cantidad,
+                        "frecuencia_dias": frec
+                    }
+                    result, success = crear_equipo(data)
+                    if success:
+                        st.success(f"✅ Equipo '{nombre}' registrado exitosamente")
+                        # Limpiar campos
+                        st.session_state.nombre_eq = ""
+                        st.session_state.componente_eq = ""
+                        st.session_state.critico_eq = "B"
+                        st.session_state.ubicacion_eq = ""
+                        st.session_state.modelo_eq = ""
+                        st.session_state.tipo_lub_eq = ""
+                        st.session_state.cantidad_eq = 15.0
+                        st.session_state.frec_eq = 30
+                        st.balloons()
+                        st.rerun()
+                    else:
+                        st.error(f"❌ Error al registrar el equipo")
+        
+        with col_btn2:
+            if st.button("🔄 Limpiar Campos", use_container_width=True):
+                st.session_state.nombre_eq = ""
+                st.session_state.componente_eq = ""
+                st.session_state.critico_eq = "B"
+                st.session_state.ubicacion_eq = ""
+                st.session_state.modelo_eq = ""
+                st.session_state.tipo_lub_eq = ""
+                st.session_state.cantidad_eq = 15.0
+                st.session_state.frec_eq = 30
                 st.rerun()
-            else:
-                st.error("Error al registrar equipo")
     
     # ==================== TAB 3: INVENTARIO ====================
     with tab3:
@@ -285,6 +349,75 @@ else:
         
         equipos = get_equipos()
         if equipos:
+            # Opción para editar
+            st.subheader("Editar Equipo")
+            col_e1, col_e2 = st.columns([2, 2])
+            
+            with col_e1:
+                equipo_para_editar = st.selectbox(
+                    "Selecciona equipo a editar",
+                    options=[f"{e['id']} - {e['nombre']}" for e in equipos],
+                    key="equipo_select"
+                )
+            
+            if equipo_para_editar:
+                eq_id = int(equipo_para_editar.split(" - ")[0])
+                equipo_actual = next((e for e in equipos if e['id'] == eq_id), None)
+                
+                if equipo_actual:
+                    st.markdown("---")
+                    st.write(f"**Editando:** {equipo_actual['nombre']}")
+                    
+                    col1, col2 = st.columns(2)
+                    
+                    with col1:
+                        nombre_edit = st.text_input("Nombre", value=equipo_actual['nombre'], key="nombre_edit")
+                        criticidad_edit = st.selectbox("Criticidad", ["A", "B", "C"], index=["A", "B", "C"].index(equipo_actual['criticidad']), key="critico_edit")
+                        tipo_lub_edit = st.text_input("Tipo lubricante", value=equipo_actual.get('tipo_lubricante', ''), key="tipo_edit")
+                        frec_edit = st.number_input("Frecuencia (días)", min_value=1, value=equipo_actual.get('frecuencia_dias', 30), key="frec_edit")
+                    
+                    with col2:
+                        componente_edit = st.text_input("Componente", value=equipo_actual.get('componente', ''), key="comp_edit")
+                        ubicacion_edit = st.text_input("Ubicación", value=equipo_actual.get('ubicacion', ''), key="ubi_edit")
+                        modelo_edit = st.text_input("Modelo rodamiento", value=equipo_actual.get('modelo_rodamiento', ''), key="modelo_edit")
+                        cantidad_edit = st.number_input("Cantidad (g)", min_value=0.0, value=float(equipo_actual.get('cantidad_gramos', 15)), key="cant_edit")
+                    
+                    col_upd1, col_upd2, col_upd3 = st.columns(3)
+                    
+                    with col_upd1:
+                        if st.button("💾 Guardar Cambios", use_container_width=True):
+                            data_update = {
+                                "nombre": nombre_edit,
+                                "componente": componente_edit,
+                                "criticidad": criticidad_edit,
+                                "ubicacion": ubicacion_edit,
+                                "modelo_rodamiento": modelo_edit,
+                                "tipo_lubricante": tipo_lub_edit,
+                                "cantidad_gramos": cantidad_edit,
+                                "frecuencia_dias": frec_edit
+                            }
+                            result, success = actualizar_equipo(eq_id, data_update)
+                            if success:
+                                st.success(f"✅ Equipo actualizado")
+                                st.rerun()
+                            else:
+                                st.error("❌ Error al actualizar")
+                    
+                    with col_upd2:
+                        if st.button("❌ Eliminar", use_container_width=True, help="Desactivará el equipo"):
+                            if eliminar_equipo(eq_id):
+                                st.success(f"✅ Equipo desactivado")
+                                st.rerun()
+                            else:
+                                st.error("❌ Error al eliminar")
+                    
+                    with col_upd3:
+                        if st.button("🔄 Cancelar", use_container_width=True):
+                            st.rerun()
+            
+            st.markdown("---")
+            st.subheader("Listado completo")
+            
             df = pd.DataFrame(equipos)
             st.dataframe(
                 df[['id', 'nombre', 'componente', 'criticidad', 'ubicacion', 'estado']],
