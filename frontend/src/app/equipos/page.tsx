@@ -1,9 +1,10 @@
 "use client";
 
 import { useEquipos, useDeleteEquipo } from "@/lib/hooks";
-import { GlassCard } from "@/components/ui/GlassCard";
+import { GlassTable } from "@/components/ui/GlassTable";
 import { Button } from "@/components/ui/Button";
 import { generateCSV, formatDate } from "@/lib/utils";
+import { motion } from "framer-motion";
 
 export default function InventarioPage() {
   const { data: equipos, isLoading } = useEquipos();
@@ -21,50 +22,113 @@ export default function InventarioPage() {
           Estado: e.estado,
           Creado: formatDate(e.created_at),
         })),
-        `equipos_${new Date().toISOString().split("T")[0]}.csv`
+        "equipos_" + new Date().toISOString().split("T")[0] + ".csv"
       );
     }
   };
 
-  if (isLoading) {
-    return <div className="text-center py-20">Cargando...</div>;
-  }
+  const columns = [
+    {
+      header: "Equipo",
+      accessorKey: "nombre" as const,
+      width: "flex-[2]",
+      cell: (item: any) => (
+        <div>
+          <div className="font-bold text-white transition-colors group-hover:text-orange-400">
+            {item.nombre}
+          </div>
+          <div className="text-xs text-zinc-500">ID: {item.id}</div>
+        </div>
+      )
+    },
+    {
+      header: "Componente",
+      accessorKey: "componente" as const,
+      width: "flex-1",
+      cell: (item: any) => <span className="text-zinc-400">{item.componente || "-"}</span>
+    },
+    {
+      header: "Criticidad",
+      accessorKey: "criticidad" as const,
+      width: "w-24 text-center",
+      cell: (item: any) => {
+        const colors: Record<string, string> = {
+          "A": "bg-red-500/20 text-red-400 border-red-500/30",
+          "B": "bg-amber-500/20 text-amber-400 border-amber-500/30",
+          "C": "bg-emerald-500/20 text-emerald-400 border-emerald-500/30"
+        };
+        return (
+          <span className={px-2 py-1 rounded-md text-xs font-bold border }>
+            {item.criticidad}
+          </span>
+        );
+      }
+    },
+    {
+      header: "UbicaciÛn",
+      accessorKey: "ubicacion" as const,
+      width: "flex-1",
+    },
+    {
+      header: "Estado",
+      accessorKey: "estado" as const,
+      width: "w-32",
+      cell: (item: any) => (
+        <span className="flex items-center gap-2">
+          <span className={w-2 h-2 rounded-full } />
+          {item.estado}
+        </span>
+      )
+    },
+    {
+      header: "Acciones",
+      width: "w-32 text-right",
+      cell: (item: any) => (
+        <Button
+          variant="danger"
+          className="bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 text-xs px-3 py-1 h-auto"
+          onClick={(e: React.MouseEvent) => {
+            e.stopPropagation();
+            if (confirm("øEliminar este equipo?")) {
+              deleteEquipo(item.id);
+            }
+          }}
+        >
+          Eliminar
+        </Button>
+      )
+    }
+  ];
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">üì¶ Inventario de Equipos</h1>
-        <Button onClick={handleExport}>üì• Exportar CSV</Button>
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="space-y-8 max-w-7xl mx-auto"
+    >
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-4xl font-black text-white tracking-tight">
+            Inventario <span className="text-zinc-600">/</span> Equipos
+          </h1>
+          <p className="text-zinc-400 mt-2 max-w-lg">
+            GestiÛn centralizada de activos y maquinaria.
+          </p>
+        </div>
+        
+        <Button 
+          onClick={handleExport}
+          className="bg-zinc-800 hover:bg-zinc-700 text-white border border-white/10 shadow-lg hover:shadow-orange-500/10 transition-all font-semibold"
+        >
+          <span className="mr-2"></span> Exportar CSV
+        </Button>
       </div>
 
-      <div className="space-y-4">
-        {equipos?.map((equipo) => (
-          <GlassCard key={equipo.id}>
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="font-bold text-lg">{equipo.nombre}</h3>
-                <div className="text-sm text-gray-600 mt-1">
-                  <span>ID: {equipo.id}</span>
-                  <span className="ml-4">
-                    Criticidad: {equipo.criticidad}
-                  </span>
-                  <span className="ml-4">Estado: {equipo.estado}</span>
-                </div>
-              </div>
-              <Button
-                variant="danger"
-                onClick={() => {
-                  if (confirm("¬øEliminar este equipo?")) {
-                    deleteEquipo(equipo.id);
-                  }
-                }}
-              >
-                ‚ùå Eliminar
-              </Button>
-            </div>
-          </GlassCard>
-        ))}
-      </div>
-    </div>
+      <GlassTable 
+        data={equipos || []}
+        columns={columns}
+        isLoading={isLoading}
+      />
+    </motion.div>
   );
 }
