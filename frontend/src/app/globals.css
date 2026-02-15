@@ -1,0 +1,79 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: #f0f4f8;
+    --foreground: #262730;
+    --critical: #ef4444;
+    --warning: #f59e0b;
+    --success: #10b981;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50;
+    @apply text-foreground;
+    @apply font-sans antialiased;
+    position: relative;
+    min-height: 100vh;
+  }
+
+  body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(at 27% 37%, hsla(215, 98%, 61%, 0.1) 0px, transparent 50%),
+      radial-gradient(at 97% 21%, hsla(125, 98%, 72%, 0.1) 0px, transparent 50%),
+      radial-gradient(at 52% 99%, hsla(354, 98%, 61%, 0.1) 0px, transparent 50%),
+      radial-gradient(at 10% 29%, hsla(256, 96%, 67%, 0.1) 0px, transparent 50%),
+      radial-gradient(at 97% 96%, hsla(38, 60%, 74%, 0.1) 0px, transparent 50%),
+      radial-gradient(at 33% 50%, hsla(222, 67%, 73%, 0.1) 0px, transparent 50%),
+      radial-gradient(at 79% 53%, hsla(343, 68%, 79%, 0.1) 0px, transparent 50%);
+    animation: meshMove 20s ease infinite;
+    z-index: -1;
+  }
+
+  @keyframes meshMove {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.8; }
+  }
+}
+
+@layer components {
+  .glass-card {
+    @apply bg-white/15 backdrop-blur-glass border border-white/20 rounded-glass shadow-glass;
+    @apply hover:shadow-glow transition-all duration-300;
+  }
+
+  .glass-input {
+    @apply bg-white/10 backdrop-blur-glass border border-white/20 rounded-lg;
+    @apply focus:border-blue-400 focus:ring-2 focus:ring-blue-400/30;
+    @apply transition-all duration-200;
+  }
+
+  .glass-button {
+    @apply bg-gradient-to-r from-blue-500 to-blue-600 text-white;
+    @apply backdrop-blur-glass border border-white/20 rounded-lg;
+    @apply hover:from-blue-600 hover:to-blue-700;
+    @apply active:scale-95 transition-all duration-200;
+    @apply shadow-lg hover:shadow-glow;
+  }
+
+  .glass-button-ghost {
+    @apply bg-white/10 backdrop-blur-glass border border-white/20 rounded-lg;
+    @apply hover:bg-white/20 transition-all duration-200;
+  }
+
+  .glass-button-danger {
+    @apply bg-red-500/20 backdrop-blur-glass border border-red-500/30 rounded-lg text-red-600;
+    @apply hover:bg-red-500/30 transition-all duration-200;
+  }
+}

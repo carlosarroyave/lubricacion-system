@@ -45,13 +45,15 @@ services:
       dockerfile: Dockerfile
     container_name: lubricacion_ui
     environment:
-      API_URL: http://backend:8000
+      NEXT_PUBLIC_API_URL: http://backend:8000
     ports:
-      - "8501:8501"
+      - "3000:3000"
     depends_on:
       - backend
     volumes:
       - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
     networks:
       - lubricacion_network
 
