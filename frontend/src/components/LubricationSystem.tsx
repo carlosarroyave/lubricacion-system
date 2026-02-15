@@ -41,6 +41,13 @@ export function LubricationSystem() {
             </motion.div>
           </AnimatePresence>
         </main>
+        <footer className="border-t border-white/10 bg-white/[0.02] backdrop-blur-sm">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 text-center">
+            <p className="text-sm text-gray-500">
+              Creado por <span className="text-orange-400 font-medium">Carlos Arroyave</span>
+            </p>
+          </div>
+        </footer>
       </div>
     </div>
   )

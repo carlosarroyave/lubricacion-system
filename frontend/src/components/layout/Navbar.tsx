@@ -10,7 +10,6 @@ import {
   History, 
   Wrench,
   LayoutDashboard,
-  Bell,
   Menu,
   X
 } from 'lucide-react'
@@ -39,17 +38,20 @@ export function Navbar({ activeTab, onTabChange }: NavbarProps) {
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          <div className="flex items-center space-x-3">
+          <button
+            onClick={() => onTabChange('planes')}
+            className="flex items-center space-x-3 group"
+          >
             <motion.div 
               whileHover={{ rotate: 15 }}
               className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center shadow-lg shadow-orange-500/20"
             >
               <Droplets className="w-5 h-5 text-white" />
             </motion.div>
-            <span className="text-xl font-bold tracking-tight text-white">
+            <span className="text-xl font-bold tracking-tight text-white group-hover:opacity-80 transition-opacity">
               Lube<span className="bg-gradient-to-r from-orange-400 to-orange-600 bg-clip-text text-transparent">Track</span> Pro
             </span>
-          </div>
+          </button>
           
           <div className="hidden md:flex space-x-1">
             {tabs.map((tab) => {
@@ -83,21 +85,7 @@ export function Navbar({ activeTab, onTabChange }: NavbarProps) {
             })}
           </div>
           
-          <div className="flex items-center space-x-4">
-            <motion.button 
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
-              className="relative p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors border border-white/10"
-            >
-              <Bell className="w-5 h-5 text-orange-400" />
-              <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse" />
-            </motion.button>
-            <motion.div 
-              whileHover={{ scale: 1.05 }}
-              className="w-8 h-8 rounded-full bg-gradient-to-r from-orange-500 to-orange-600 flex items-center justify-center text-sm font-bold text-white cursor-pointer"
-            >
-              AD
-            </motion.div>
+          <div className="flex items-center">
             <button
               className="md:hidden p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors border border-white/10"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
