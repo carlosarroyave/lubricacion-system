@@ -1,4 +1,4 @@
-"use client";
+ï»¿"use client";
 
 import { usePlanesProximos } from "@/lib/hooks";
 import { GlassCard } from "@/components/ui/GlassCard";
@@ -50,10 +50,10 @@ export default function Home() {
       <motion.div variants={item} className="relative z-10 flex flex-col md:flex-row items-center gap-8 py-8">
         <div className="flex-1 space-y-4">
           <h1 className="text-5xl md:text-6xl font-black tracking-tight text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]">
-            Pool de <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-amber-600">Lubricación</span>
+            Pool de <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-amber-600">LubricaciÃ³n</span>
           </h1>
           <p className="text-xl text-zinc-400 max-w-2xl bg-black/40 p-4 rounded-xl border-l-4 border-orange-500 backdrop-blur-sm">
-            Gestión inteligente de mantenimiento predictivo. Equipos pendientes para los próximos 7 días.
+            GestiÃ³n inteligente de mantenimiento predictivo. Equipos pendientes para los prÃ³ximos 7 dÃ­as.
           </p>
         </div>
         
@@ -74,7 +74,7 @@ export default function Home() {
               {criticos.length}
             </div>
             <div className="text-lg font-medium text-zinc-400 mt-2 uppercase tracking-widest border-t border-white/10 pt-2 inline-block">
-              Críticos
+              CrÃ­ticos
             </div>
           </div>
         </GlassCard>
@@ -109,7 +109,7 @@ export default function Home() {
         <div className="flex items-center justify-between">
             <h2 className="text-2xl font-bold text-white flex items-center gap-2">
                 <span className="w-2 h-8 bg-orange-500 rounded-full"></span>
-                Próximas Tareas
+                PrÃ³ximas Tareas
             </h2>
         </div>
         

@@ -1,4 +1,4 @@
-"use client";
+ï»¿"use client";
 
 import { useEquipos, useDeleteEquipo } from "@/lib/hooks";
 import { GlassTable } from "@/components/ui/GlassTable";
@@ -65,7 +65,7 @@ export default function InventarioPage() {
       }
     },
     {
-      header: "Ubicación",
+      header: "UbicaciÃ³n",
       accessorKey: "ubicacion" as const,
       width: "flex-1",
     },
@@ -89,7 +89,7 @@ export default function InventarioPage() {
           className="bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 text-xs px-3 py-1 h-auto"
           onClick={(e: React.MouseEvent) => {
             e.stopPropagation();
-            if (confirm("¿Eliminar este equipo?")) {
+            if (confirm("Â¿Eliminar este equipo?")) {
               deleteEquipo(item.id);
             }
           }}
@@ -112,7 +112,7 @@ export default function InventarioPage() {
             Inventario <span className="text-zinc-600">/</span> Equipos
           </h1>
           <p className="text-zinc-400 mt-2 max-w-lg">
-            Gestión centralizada de activos y maquinaria.
+            GestiÃ³n centralizada de activos y maquinaria.
           </p>
         </div>
         

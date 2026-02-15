@@ -1,4 +1,4 @@
-import type { Config } from "tailwindcss"
+﻿import type { Config } from "tailwindcss"
 
 const config: Config = {
   content: [
@@ -9,17 +9,20 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Void Black Palette
         void: {
           950: "#09090b",
           900: "#18181b",
           800: "#27272a",
         },
-        // Blaze Orange Palette
         blaze: {
           500: "#f97316",
           400: "#fbbf24",
           glow: "rgba(249, 115, 22, 0.5)",
+        },
+        glass: {
+          surface: "rgba(24, 24, 27, 0.6)",
+          border: "rgba(255, 255, 255, 0.1)",
+          highlight: "rgba(249, 115, 22, 0.1)",
         },
         critical: "#ef4444",
         warning: "#f59e0b",
