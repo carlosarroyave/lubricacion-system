@@ -10,7 +10,7 @@ Sistema profesional y escalable de gestión de lubricación para equipos industr
 - **Calculadora SKF**: Cálculo automático de cantidades según norma SKF
 - **Alertas Inteligentes**: Sistema de alertas para lubricaciones vencidas o próximas
 - **Reportes**: Exportación de datos en CSV
-- **Interfaz Moderna**: Frontend intuitivo con Streamlit
+- **Interfaz Moderna**: Frontend con diseño Glassmorphism y animaciones fluidas
 - **API RESTful**: Backend profesional con FastAPI
 
 ## 🏗️ Stack Tecnológico
@@ -22,25 +22,31 @@ Sistema profesional y escalable de gestión de lubricación para equipos industr
 - **PostgreSQL** - Base de datos relacional (via Supabase)
 
 ### Frontend
-- **Streamlit** - Framework UI interactivo
-- **Pandas** - Análisis de datos
-- **Requests** - Cliente HTTP
+- **Next.js 14** - React framework con App Router
+- **TypeScript** - Type safety
+- **Tailwind CSS** - Utility-first styling
+- **Framer Motion** - Animaciones fluidas
+- **TanStack Query** - State management y data fetching
+- **React Hook Form + Zod** - Validación de formularios
+- **Glassmorphism Design** - UI moderna con efectos glass
 
 ### Cloud
 - **Supabase** - PostgreSQL cloud (GRATIS)
 - **Render.com** - Backend API hosting (GRATIS)
-- **Streamlit Cloud** - Frontend hosting (GRATIS)
+- **Vercel** - Frontend hosting (GRATIS)
 
 ## 🚀 Inicio Rápido - Deploy en la Nube
 
 ### Opción 1: Deploy Automático (Recomendado)
 
-👉 **Ver:** [DEPLOY-RAPIDO.md](DEPLOY-RAPIDO.md) para instrucciones paso a paso
+👉 **Ver:**
+- [DEPLOY-RAPIDO.md](DEPLOY-RAPIDO.md) para backend
+- [DEPLOY-VERCEL.md](DEPLOY-VERCEL.md) para frontend
 
 **Resumen:**
 1. Crear BD en **Supabase** (5 min)
 2. Deploy backend en **Render.com** (10 min)
-3. Deploy frontend en **Streamlit Cloud** (5 min)
+3. Deploy frontend en **Vercel** (5 min)
 4. ¡Listo! Tu app está en vivo
 
 ### Opción 2: Local con Docker
@@ -53,7 +59,7 @@ docker-compose up
 ```
 
 Accede a:
-- Frontend: http://localhost:8501
+- Frontend: http://localhost:3000
 - API Docs: http://localhost:8000/api/docs
 
 ### Opción 3: Local sin Docker
@@ -62,6 +68,13 @@ Accede a:
 # Backend
 cd backend
 pip install -r requirements.txt
+uvicorn app.main:app --reload
+
+# Frontend (en otro terminal)
+cd frontend
+npm install
+npm run dev
+```
 uvicorn app.main:app --reload
 
 # Frontend (en otro terminal)
