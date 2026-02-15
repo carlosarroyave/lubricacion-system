@@ -1,57 +1,57 @@
-﻿import type { Config } from "tailwindcss"
+import type { Config } from 'tailwindcss'
 
 const config: Config = {
   content: [
-    "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
-    "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
-    "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
+    './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
+    './src/components/**/*.{js,ts,jsx,tsx,mdx}',
+    './src/app/**/*.{js,ts,jsx,tsx,mdx}',
   ],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ['Inter', 'system-ui', 'sans-serif'],
+      },
       colors: {
-        void: {
-          950: "#09090b",
-          900: "#18181b",
-          800: "#27272a",
+        dark: {
+          900: '#0a0a0a',
+          800: '#171717',
+          700: '#262626',
+          600: '#404040',
         },
-        blaze: {
-          500: "#f97316",
-          400: "#fbbf24",
-          glow: "rgba(249, 115, 22, 0.5)",
+        orange: {
+          50: '#fff7ed',
+          100: '#ffedd5',
+          200: '#fed7aa',
+          300: '#fdba74',
+          400: '#fb923c',
+          500: '#f97316',
+          600: '#ea580c',
+          700: '#c2410c',
+          800: '#9a3412',
+          900: '#7c2d12',
         },
-        glass: {
-          surface: "rgba(24, 24, 27, 0.6)",
-          border: "rgba(255, 255, 255, 0.1)",
-          highlight: "rgba(249, 115, 22, 0.1)",
-        },
-        critical: "#ef4444",
-        warning: "#f59e0b",
-        success: "#10b981",
-      },
-      backdropBlur: {
-        xs: "2px",
-        glass: "16px",
-      },
-      borderRadius: {
-        glass: "16px",
-      },
-      boxShadow: {
-        glass: "0 8px 32px 0 rgba(0, 0, 0, 0.5)",
-        glow: "0 0 40px -10px rgba(249, 115, 22, 0.4)",
       },
       animation: {
-        "float": "float 6s ease-in-out infinite",
-        "pulse-slow": "pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+        'float': 'float 6s ease-in-out infinite',
+        'float-delayed': 'float 8s ease-in-out infinite 1s',
+        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+        'shimmer': 'shimmer 2s linear infinite',
       },
       keyframes: {
         float: {
-          "0%, 100%": { transform: "translateY(0)" },
-          "50%": { transform: "translateY(-10px)" },
+          '0%, 100%': { transform: 'translateY(0px)' },
+          '50%': { transform: 'translateY(-20px)' },
         },
+        shimmer: {
+          '0%': { backgroundPosition: '-200% 0' },
+          '100%': { backgroundPosition: '200% 0' },
+        },
+      },
+      backdropBlur: {
+        xs: '2px',
       },
     },
   },
   plugins: [],
 }
-
 export default config
