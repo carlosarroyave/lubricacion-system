@@ -127,10 +127,12 @@ export default function Home() {
                             {plan.tarea}  {new Date(plan.fecha_programada).toLocaleDateString()}
                         </div>
                     </div>
-                    <div className={
+                    <div className={`
                         px-3 py-1 rounded-full text-xs font-bold border
-                        
-                    }>
+                        ${plan.criticidad === 'A' ? 'bg-red-500/20 text-red-400 border-red-500/30' :
+                          plan.criticidad === 'B' ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' :
+                          'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'}
+                    `}>
                         {plan.criticidad}
                     </div>
                 </GlassCard>

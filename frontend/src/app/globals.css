@@ -61,7 +61,8 @@
 
 @layer components {
   .glass-card {
-    @apply backdrop-blur-xl border border-white/10 shadow-xl transition-all duration-300 rounded-xl;
+    @apply border border-white/10 shadow-xl transition-all duration-300 rounded-xl;
+    backdrop-filter: blur(24px);
     background-color: rgba(24, 24, 27, 0.6);
   }
   
@@ -70,7 +71,8 @@
   }
 
   .glass-row {
-    @apply backdrop-blur-md border-b border-white/5 transition-all duration-200 cursor-pointer;
+    @apply border-b border-white/5 transition-all duration-200 cursor-pointer;
+    backdrop-filter: blur(12px);
     background-color: rgba(24, 24, 27, 0.3);
   }
   

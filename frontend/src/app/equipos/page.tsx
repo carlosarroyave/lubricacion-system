@@ -58,7 +58,7 @@ export default function InventarioPage() {
           "C": "bg-emerald-500/20 text-emerald-400 border-emerald-500/30"
         };
         return (
-          <span className={px-2 py-1 rounded-md text-xs font-bold border }>
+          <span className={`px-2 py-1 rounded-md text-xs font-bold border ${colors[item.criticidad]}`}>
             {item.criticidad}
           </span>
         );
@@ -75,7 +75,7 @@ export default function InventarioPage() {
       width: "w-32",
       cell: (item: any) => (
         <span className="flex items-center gap-2">
-          <span className={w-2 h-2 rounded-full } />
+          <span className={`w-2 h-2 rounded-full ${item.estado === 'ACTIVO' ? 'bg-green-500' : 'bg-zinc-500'}`} />
           {item.estado}
         </span>
       )
