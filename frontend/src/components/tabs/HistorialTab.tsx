@@ -1,186 +1,221 @@
 'use client'
 
+import { useState, useEffect, useCallback } from 'react'
 import { motion } from 'framer-motion'
 import { GlassCard } from '@/components/ui/GlassCard'
-import { HistoryEntry } from '@/types'
-import { 
-  CheckCircle2, 
-  Clock, 
-  Eye, 
-  User, 
-  ClipboardCheck,
-  Filter
+import { GlassPanel } from '@/components/ui/GlassPanel'
+import { AnimatedCounter } from '@/components/ui/AnimatedCounter'
+import { Historial } from '@/types'
+import { getHistorial } from '@/lib/api'
+import { formatDate } from '@/lib/utils'
+import {
+  History,
+  Loader2,
+  AlertTriangle,
+  RefreshCw,
+  Search,
+  ClipboardList,
+  User,
+  Calendar,
+  Droplets,
+  FileText,
 } from 'lucide-react'
 
-const historyData: HistoryEntry[] = [
-  {
-    id: '1',
-    timestamp: 'Hoy, 14:30',
-    title: 'Lubricación Programada Completada',
-    description: 'Equipo: Compresor A-101 | Punto: LUB-001 | Lubricante: ISO VG 68',
-    technician: 'Juan Pérez',
-    status: 'completed',
-    type: 'routine'
-  },
-  {
-    id: '2',
-    timestamp: 'Hoy, 11:15',
-    title: 'Cambio de Lubricante',
-    description: 'Equipo: Reductor R-120 | Tipo: ISO VG 220 | Motivo: Contaminación',
-    technician: 'Carlos López',
-    status: 'in-progress',
-    type: 'change'
-  },
-  {
-    id: '3',
-    timestamp: 'Ayer, 16:45',
-    title: 'Inspección Visual',
-    description: 'Equipo: Bomba Centrífuga B-205 | Estado: Normal | Nivel: OK',
-    technician: 'Ana García',
-    status: 'registered',
-    type: 'inspection'
-  },
-]
-
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: { staggerChildren: 0.1 }
-  }
-}
-
-const itemVariants = {
-  hidden: { y: 20, opacity: 0 },
-  visible: {
-    y: 0,
-    opacity: 1,
-    transition: { type: "spring", stiffness: 100 }
-  }
-}
-
 export function HistorialTab() {
-  const getStatusConfig = (status: string) => {
-    switch(status) {
-      case 'completed':
-        return { color: 'green', icon: CheckCircle2, label: 'Completado' }
-      case 'in-progress':
-        return { color: 'blue', icon: Clock, label: 'En Proceso' }
-      case 'registered':
-        return { color: 'gray', icon: Eye, label: 'Registrado' }
-      default:
-        return { color: 'gray', icon: Eye, label: status }
-    }
-  }
+  const [historial, setHistorial] = useState<Historial[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [limit, setLimit] = useState(50)
 
-  const getTypeConfig = (type: string) => {
-    switch(type) {
-      case 'routine':
-        return { color: 'bg-green-500', label: 'Programada' }
-      case 'change':
-        return { color: 'bg-blue-500', label: 'Cambio' }
-      case 'inspection':
-        return { color: 'bg-gray-500', label: 'Inspección' }
-      default:
-        return { color: 'bg-gray-500', label: type }
+  const fetchHistorial = useCallback(async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      const data = await getHistorial(undefined, limit)
+      setHistorial(data)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error al cargar historial')
+    } finally {
+      setLoading(false)
     }
-  }
+  }, [limit])
 
-  const statusColorMap: Record<string, { text: string; bg: string; border: string }> = {
-    green: { text: 'text-green-400', bg: 'bg-green-500/20', border: 'border-green-500/30' },
-    blue: { text: 'text-blue-400', bg: 'bg-blue-500/20', border: 'border-blue-500/30' },
-    gray: { text: 'text-gray-400', bg: 'bg-gray-500/20', border: 'border-gray-500/30' },
-  }
+  useEffect(() => { fetchHistorial() }, [fetchHistorial])
+
+  const filtered = historial.filter((h) => {
+    const q = searchQuery.toLowerCase()
+    return (
+      h.tecnico.toLowerCase().includes(q) ||
+      (h.observaciones || '').toLowerCase().includes(q) ||
+      String(h.plan_id).includes(q)
+    )
+  })
 
   return (
-    <motion.div
-      variants={containerVariants}
-      initial="hidden"
-      animate="visible"
-      className="space-y-8"
-    >
-      <motion.div variants={itemVariants}>
-        <h1 className="text-3xl font-bold text-white mb-2">Historial de Lubricación</h1>
-        <p className="text-gray-400">Registro completo de actividades de mantenimiento lubricante</p>
-      </motion.div>
-
-      <motion.div variants={itemVariants}>
-        <GlassCard className="p-6">
-          <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
-            <div className="flex gap-2">
-              <input
-                type="date"
-                className="bg-black/30 border border-white/10 rounded-lg px-4 py-2 text-sm text-white focus:border-orange-500/60 focus:outline-none"
-              />
-              <span className="text-gray-400 self-center">a</span>
-              <input
-                type="date"
-                className="bg-black/30 border border-white/10 rounded-lg px-4 py-2 text-sm text-white focus:border-orange-500/60 focus:outline-none"
-              />
+    <div className="space-y-6">
+      {/* Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <GlassCard hover={false} className="p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-400">Total Registros</p>
+              <AnimatedCounter value={historial.length} className="text-3xl font-bold text-white" />
             </div>
-            <div className="flex gap-3">
-              <select className="bg-black/30 border border-white/10 rounded-lg px-4 py-2 text-sm text-white focus:border-orange-500/60 focus:outline-none">
-                <option>Todos los técnicos</option>
-                <option>Juan Pérez</option>
-                <option>Carlos López</option>
-                <option>Ana García</option>
-              </select>
-              <button className="bg-gradient-to-r from-orange-500 to-orange-600 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 hover:from-orange-600 hover:to-orange-700 transition-all">
-                <Filter className="w-4 h-4" />
-                Filtrar
-              </button>
+            <div className="w-12 h-12 rounded-xl bg-orange-500/20 flex items-center justify-center">
+              <ClipboardList className="w-6 h-6 text-orange-400" />
             </div>
-          </div>
-
-          <div className="relative border-l-2 border-orange-500/30 ml-4 space-y-8">
-            {historyData.map((entry, index) => {
-              const statusConfig = getStatusConfig(entry.status)
-              const typeConfig = getTypeConfig(entry.type)
-              const StatusIcon = statusConfig.icon
-              const colors = statusColorMap[statusConfig.color] || statusColorMap.gray
-              
-              return (
-                <motion.div
-                  key={entry.id}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: index * 0.2 }}
-                  className="relative pl-8 group"
-                >
-                  <motion.div 
-                    whileHover={{ scale: 1.2 }}
-                    className={`absolute -left-2 top-0 w-4 h-4 rounded-full ${typeConfig.color} border-4 border-dark-900 shadow-lg`}
-                  />
-                  
-                  <GlassCard className="p-5 hover:border-orange-500/40 transition-all duration-300">
-                    <div className="flex justify-between items-start mb-3">
-                      <div>
-                        <span className={`${colors.text} text-sm font-medium`}>{entry.timestamp}</span>
-                        <h4 className="text-white font-medium mt-1 text-lg">{entry.title}</h4>
-                      </div>
-                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${colors.bg} ${colors.text} border ${colors.border} flex items-center gap-1`}>
-                        <StatusIcon className="w-3 h-3" />
-                        {statusConfig.label}
-                      </span>
-                    </div>
-                    <p className="text-sm text-gray-400 mb-4">{entry.description}</p>
-                    <div className="flex items-center gap-4 text-xs text-gray-500">
-                      <span className="flex items-center gap-1">
-                        <User className="w-3 h-3" />
-                        Técnico: {entry.technician}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <ClipboardCheck className="w-3 h-3" />
-                        {entry.type === 'change' ? 'Análisis: Requerido' : 'Observaciones: Sin novedad'}
-                      </span>
-                    </div>
-                  </GlassCard>
-                </motion.div>
-              )
-            })}
           </div>
         </GlassCard>
-      </motion.div>
-    </motion.div>
+
+        <GlassCard hover={false} className="p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-400">Técnicos Únicos</p>
+              <AnimatedCounter
+                value={new Set(historial.map(h => h.tecnico)).size}
+                className="text-3xl font-bold text-blue-400"
+              />
+            </div>
+            <div className="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center">
+              <User className="w-6 h-6 text-blue-400" />
+            </div>
+          </div>
+        </GlassCard>
+
+        <GlassCard hover={false} className="p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-400">Grasa Total Aplicada</p>
+              <AnimatedCounter
+                value={Math.round(historial.reduce((sum, h) => sum + h.cantidad_aplicada, 0))}
+                suffix="g"
+                className="text-3xl font-bold text-green-400"
+              />
+            </div>
+            <div className="w-12 h-12 rounded-xl bg-green-500/20 flex items-center justify-center">
+              <Droplets className="w-6 h-6 text-green-400" />
+            </div>
+          </div>
+        </GlassCard>
+      </div>
+
+      {/* Toolbar */}
+      <GlassPanel className="p-4">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-3 flex-1">
+            <div className="relative flex-1 max-w-sm">
+              <Search className="w-4 h-4 absolute left-3 top-2.5 text-gray-500" />
+              <input
+                type="text"
+                placeholder="Buscar por técnico u observaciones..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full bg-black/30 border border-white/10 rounded-lg pl-10 pr-4 py-2 text-sm text-white placeholder-gray-500 focus:border-orange-500/60 focus:outline-none focus:ring-2 focus:ring-orange-500/10"
+              />
+            </div>
+            <select
+              value={limit}
+              onChange={(e) => setLimit(Number(e.target.value))}
+              className="bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:border-orange-500/60 focus:outline-none"
+            >
+              <option value={20}>20 registros</option>
+              <option value={50}>50 registros</option>
+              <option value={100}>100 registros</option>
+            </select>
+          </div>
+          <button
+            onClick={fetchHistorial}
+            disabled={loading}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/5 text-gray-300 border border-white/10 hover:bg-white/10 transition-colors text-sm"
+          >
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            Actualizar
+          </button>
+        </div>
+      </GlassPanel>
+
+      {/* Content */}
+      {loading ? (
+        <div className="flex items-center justify-center py-20">
+          <Loader2 className="w-8 h-8 text-orange-400 animate-spin" />
+        </div>
+      ) : error ? (
+        <GlassPanel className="p-8 text-center">
+          <AlertTriangle className="w-12 h-12 text-red-400 mx-auto mb-4" />
+          <p className="text-red-400 mb-4">{error}</p>
+          <button onClick={fetchHistorial} className="px-4 py-2 rounded-lg bg-orange-500/20 text-orange-300 border border-orange-500/30 hover:bg-orange-500/30 transition-colors text-sm">
+            Reintentar
+          </button>
+        </GlassPanel>
+      ) : filtered.length === 0 ? (
+        <GlassPanel className="p-12 text-center">
+          <History className="w-16 h-16 text-gray-600 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-white mb-2">Sin registros</h3>
+          <p className="text-gray-400">No se encontraron registros de lubricación.</p>
+        </GlassPanel>
+      ) : (
+        <GlassPanel>
+          <div className="overflow-x-auto custom-scrollbar">
+            <table className="w-full">
+              <thead className="bg-black/20">
+                <tr>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-orange-400 uppercase tracking-wider">ID</th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-orange-400 uppercase tracking-wider">Plan ID</th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-orange-400 uppercase tracking-wider">Técnico</th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-orange-400 uppercase tracking-wider">Cantidad (g)</th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-orange-400 uppercase tracking-wider">Fecha Ejecución</th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-orange-400 uppercase tracking-wider">Observaciones</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/5">
+                {filtered.map((h, idx) => (
+                  <motion.tr
+                    key={h.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: idx * 0.02 }}
+                    className="group hover:bg-orange-500/5 transition-colors"
+                  >
+                    <td className="px-6 py-4 text-sm text-gray-500 font-mono">#{h.id}</td>
+                    <td className="px-6 py-4 text-sm text-gray-400 font-mono">Plan #{h.plan_id}</td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 rounded-full bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center text-xs font-bold text-white">
+                          {h.tecnico.charAt(0).toUpperCase()}
+                        </div>
+                        <span className="text-sm text-white">{h.tecnico}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-300">
+                      <span className="inline-flex items-center gap-1">
+                        <Droplets className="w-3.5 h-3.5 text-blue-400" />
+                        {h.cantidad_aplicada}g
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-300">
+                      <span className="inline-flex items-center gap-1">
+                        <Calendar className="w-3.5 h-3.5 text-gray-500" />
+                        {formatDate(h.fecha_ejecucion)}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-400 max-w-xs truncate">
+                      {h.observaciones ? (
+                        <span className="inline-flex items-center gap-1">
+                          <FileText className="w-3.5 h-3.5 text-gray-500 flex-shrink-0" />
+                          {h.observaciones}
+                        </span>
+                      ) : (
+                        <span className="text-gray-600">—</span>
+                      )}
+                    </td>
+                  </motion.tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </GlassPanel>
+      )}
+    </div>
   )
 }

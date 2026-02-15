@@ -7,8 +7,8 @@ import { TabType } from '@/types'
 import { 
   Droplets, 
   Settings, 
-  Package, 
   History, 
+  Wrench,
   LayoutDashboard,
   Bell,
   Menu,
@@ -21,10 +21,10 @@ interface NavbarProps {
 }
 
 const tabs: { id: TabType; label: string; icon: React.ElementType }[] = [
-  { id: 'pool', label: 'Pool de Lubricación', icon: Droplets },
+  { id: 'planes', label: 'Planes Lubricación', icon: Droplets },
   { id: 'equipos', label: 'Equipos', icon: Settings },
-  { id: 'inventario', label: 'Inventario', icon: Package },
   { id: 'historial', label: 'Historial', icon: History },
+  { id: 'herramientas', label: 'Herramientas', icon: Wrench },
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
 ]
 
@@ -98,7 +98,6 @@ export function Navbar({ activeTab, onTabChange }: NavbarProps) {
             >
               AD
             </motion.div>
-            {/* Mobile menu button */}
             <button
               className="md:hidden p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors border border-white/10"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -113,7 +112,6 @@ export function Navbar({ activeTab, onTabChange }: NavbarProps) {
         </div>
       </div>
 
-      {/* Mobile menu */}
       {mobileMenuOpen && (
         <motion.div
           initial={{ opacity: 0, height: 0 }}

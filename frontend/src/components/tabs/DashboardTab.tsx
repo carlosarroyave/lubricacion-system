@@ -1,159 +1,272 @@
 'use client'
 
+import { useState, useEffect, useCallback } from 'react'
 import { motion } from 'framer-motion'
 import { GlassCard } from '@/components/ui/GlassCard'
+import { GlassPanel } from '@/components/ui/GlassPanel'
 import { AnimatedCounter } from '@/components/ui/AnimatedCounter'
-import { 
-  TrendingUp, 
-  Activity, 
-  Droplets, 
-  AlertTriangle
+import { StatusBadge } from '@/components/ui/StatusBadge'
+import { Equipo, PlanProximo, Historial } from '@/types'
+import { getEquipos, getPlanesProximos, getHistorial } from '@/lib/api'
+import {
+  LayoutDashboard,
+  Settings,
+  AlertTriangle,
+  CheckCircle,
+  Droplets,
+  Clock,
+  Loader2,
+  TrendingUp,
+  Users,
+  Activity,
+  RefreshCw,
 } from 'lucide-react'
 
-const stats = [
-  { label: 'Eficiencia del Programa', value: 98.5, suffix: '%', icon: TrendingUp, color: 'from-orange-400 to-orange-600', change: '' },
-  { label: 'Puntos Monitoreados', value: 1247, suffix: '', icon: Activity, color: 'from-blue-400 to-blue-600', change: '+12 nuevos' },
-  { label: 'Litros Consumidos (Mes)', value: 45, suffix: '', icon: Droplets, color: 'from-purple-400 to-purple-600', change: '-5% vs mes anterior' },
-  { label: 'Fallos por Lubricación', value: 0, suffix: '', icon: AlertTriangle, color: 'from-green-400 to-green-600', change: 'Meta alcanzada' },
-]
-
-const consumptionData = [
-  { name: 'ISO VG 68', percentage: 45, color: 'bg-orange-500' },
-  { name: 'ISO VG 46', percentage: 30, color: 'bg-orange-400' },
-  { name: 'Grasa NLGI 2', percentage: 15, color: 'bg-yellow-500' },
-  { name: 'ISO VG 220', percentage: 10, color: 'bg-red-500' },
-]
-
-const upcomingActivities = [
-  { id: 'LUB-002', equipment: 'Bomba B-205', status: 'urgent', message: 'Vencido - Requiere atención inmediata', border: 'border-red-500' },
-  { id: 'LUB-015', equipment: 'Compresor A-105', status: 'upcoming', message: 'Vence en 2 días', border: 'border-yellow-500' },
-  { id: 'LUB-042', equipment: 'Motor M-460', status: 'scheduled', message: 'Programado para mañana', border: 'border-blue-500' },
-]
-
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: { staggerChildren: 0.1 }
-  }
-}
-
-const itemVariants = {
-  hidden: { y: 20, opacity: 0 },
-  visible: {
-    y: 0,
-    opacity: 1,
-    transition: { type: "spring", stiffness: 100 }
-  }
-}
-
 export function DashboardTab() {
-  return (
-    <motion.div
-      variants={containerVariants}
-      initial="hidden"
-      animate="visible"
-      className="space-y-8"
-    >
-      <motion.div variants={itemVariants}>
-        <h1 className="text-3xl font-bold text-white mb-2">Dashboard General</h1>
-        <p className="text-gray-400">Métricas y análisis del sistema de lubricación</p>
-      </motion.div>
+  const [equipos, setEquipos] = useState<Equipo[]>([])
+  const [planes, setPlanes] = useState<PlanProximo[]>([])
+  const [historial, setHistorial] = useState<Historial[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-      {/* Stats Grid */}
-      <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map((stat, index) => {
-          const Icon = stat.icon
-          return (
-            <GlassCard key={index} className="p-6 text-center group">
-              <div className="flex justify-center mb-4">
-                <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${stat.color} flex items-center justify-center shadow-lg`}>
-                  <Icon className="w-7 h-7 text-white" />
+  const fetchAll = useCallback(async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      const [eqs, pls, hist] = await Promise.all([
+        getEquipos(0, 100),
+        getPlanesProximos(30),
+        getHistorial(undefined, 100),
+      ])
+      setEquipos(eqs)
+      setPlanes(pls)
+      setHistorial(hist)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error al cargar datos')
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => { fetchAll() }, [fetchAll])
+
+  const activos = equipos.filter(e => e.estado === 'ACTIVO').length
+  const enMantenimiento = equipos.filter(e => e.estado === 'MANTENIMIENTO').length
+  const vencidos = planes.filter(p => p.dias_restantes < 0).length
+  const proximosHoy = planes.filter(p => p.dias_restantes >= 0 && p.dias_restantes <= 1).length
+  const criticosA = equipos.filter(e => e.criticidad === 'A').length
+  const totalGrasaAplicada = Math.round(historial.reduce((s, h) => s + h.cantidad_aplicada, 0))
+  const tecnicosUnicos = new Set(historial.map(h => h.tecnico)).size
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="w-8 h-8 text-orange-400 animate-spin" />
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <GlassPanel className="p-8 text-center">
+        <AlertTriangle className="w-12 h-12 text-red-400 mx-auto mb-4" />
+        <p className="text-red-400 mb-4">{error}</p>
+        <button onClick={fetchAll} className="px-4 py-2 rounded-lg bg-orange-500/20 text-orange-300 border border-orange-500/30 hover:bg-orange-500/30 transition-colors text-sm">
+          Reintentar
+        </button>
+      </GlassPanel>
+    )
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-orange-500/20 flex items-center justify-center">
+            <LayoutDashboard className="w-5 h-5 text-orange-400" />
+          </div>
+          <div>
+            <h2 className="text-xl font-bold text-white">Dashboard</h2>
+            <p className="text-sm text-gray-400">Resumen general del sistema</p>
+          </div>
+        </div>
+        <button
+          onClick={fetchAll}
+          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/5 text-gray-300 border border-white/10 hover:bg-white/10 transition-colors text-sm"
+        >
+          <RefreshCw className="w-4 h-4" />
+          Actualizar
+        </button>
+      </div>
+
+      {/* Main Stats */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <GlassCard hover={false} className="p-6">
+          <div className="flex items-center justify-between mb-2">
+            <Settings className="w-5 h-5 text-orange-400" />
+            <span className="text-xs text-gray-500">equipos</span>
+          </div>
+          <AnimatedCounter value={equipos.length} className="text-3xl font-bold text-white" />
+          <p className="text-sm text-gray-400 mt-1">Total Equipos</p>
+        </GlassCard>
+
+        <GlassCard hover={false} className="p-6">
+          <div className="flex items-center justify-between mb-2">
+            <CheckCircle className="w-5 h-5 text-green-400" />
+            <span className="text-xs text-gray-500">operativos</span>
+          </div>
+          <AnimatedCounter value={activos} className="text-3xl font-bold text-green-400" />
+          <p className="text-sm text-gray-400 mt-1">Equipos Activos</p>
+        </GlassCard>
+
+        <GlassCard hover={false} className="p-6">
+          <div className="flex items-center justify-between mb-2">
+            <AlertTriangle className="w-5 h-5 text-red-400" />
+            <span className="text-xs text-gray-500">atención</span>
+          </div>
+          <AnimatedCounter value={vencidos} className="text-3xl font-bold text-red-400" />
+          <p className="text-sm text-gray-400 mt-1">Planes Vencidos</p>
+        </GlassCard>
+
+        <GlassCard hover={false} className="p-6">
+          <div className="flex items-center justify-between mb-2">
+            <Droplets className="w-5 h-5 text-blue-400" />
+            <span className="text-xs text-gray-500">gramos</span>
+          </div>
+          <AnimatedCounter value={totalGrasaAplicada} suffix="g" className="text-3xl font-bold text-blue-400" />
+          <p className="text-sm text-gray-400 mt-1">Grasa Aplicada</p>
+        </GlassCard>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left: More stats */}
+        <div className="space-y-4">
+          <GlassPanel className="p-6">
+            <h3 className="text-sm font-semibold text-orange-400 uppercase tracking-wider mb-4">Resumen Operativo</h3>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Activity className="w-4 h-4 text-yellow-400" />
+                  <span className="text-sm text-gray-300">En Mantenimiento</span>
                 </div>
+                <span className="text-sm font-bold text-yellow-400">{enMantenimiento}</span>
               </div>
-              <div className={`text-4xl font-bold bg-gradient-to-r ${stat.color} bg-clip-text text-transparent mb-2`}>
-                <AnimatedCounter value={stat.value} suffix={stat.suffix} />
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-orange-400" />
+                  <span className="text-sm text-gray-300">Hoy/Mañana</span>
+                </div>
+                <span className="text-sm font-bold text-orange-400">{proximosHoy}</span>
               </div>
-              <p className="text-sm text-gray-400 mb-4">{stat.label}</p>
-              {stat.change ? (
-                <div className="text-xs text-gray-500">{stat.change}</div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 text-red-400" />
+                  <span className="text-sm text-gray-300">Criticidad A</span>
+                </div>
+                <span className="text-sm font-bold text-red-400">{criticosA}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Users className="w-4 h-4 text-blue-400" />
+                  <span className="text-sm text-gray-300">Técnicos Activos</span>
+                </div>
+                <span className="text-sm font-bold text-blue-400">{tecnicosUnicos}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <TrendingUp className="w-4 h-4 text-green-400" />
+                  <span className="text-sm text-gray-300">Ejecuciones</span>
+                </div>
+                <span className="text-sm font-bold text-green-400">{historial.length}</span>
+              </div>
+            </div>
+          </GlassPanel>
+
+          {/* Criticidad breakdown */}
+          <GlassPanel className="p-6">
+            <h3 className="text-sm font-semibold text-orange-400 uppercase tracking-wider mb-4">Distribución Criticidad</h3>
+            <div className="space-y-3">
+              {(['A', 'B', 'C'] as const).map(crit => {
+                const count = equipos.filter(e => e.criticidad === crit).length
+                const pct = equipos.length ? Math.round((count / equipos.length) * 100) : 0
+                const color = crit === 'A' ? 'bg-red-500' : crit === 'B' ? 'bg-yellow-500' : 'bg-blue-500'
+                const textColor = crit === 'A' ? 'text-red-400' : crit === 'B' ? 'text-yellow-400' : 'text-blue-400'
+                return (
+                  <div key={crit}>
+                    <div className="flex items-center justify-between text-sm mb-1">
+                      <span className={textColor}>Nivel {crit}</span>
+                      <span className="text-gray-400">{count} ({pct}%)</span>
+                    </div>
+                    <div className="w-full h-2 rounded-full bg-white/5">
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${pct}%` }}
+                        transition={{ duration: 1, delay: 0.2 }}
+                        className={`h-full rounded-full ${color}`}
+                      />
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </GlassPanel>
+        </div>
+
+        {/* Center & Right: Planes vencidos list */}
+        <div className="lg:col-span-2">
+          <GlassPanel>
+            <div className="p-6 border-b border-white/10">
+              <h3 className="text-sm font-semibold text-orange-400 uppercase tracking-wider">
+                Planes Próximos ({planes.length})
+              </h3>
+            </div>
+            <div className="max-h-[500px] overflow-y-auto custom-scrollbar">
+              {planes.length === 0 ? (
+                <div className="p-12 text-center">
+                  <CheckCircle className="w-12 h-12 text-green-400 mx-auto mb-3 opacity-50" />
+                  <p className="text-gray-400">Todos los planes están al día</p>
+                </div>
               ) : (
-                <div className="mt-4 h-2 bg-gray-700 rounded-full overflow-hidden">
-                  <motion.div 
-                    initial={{ width: 0 }}
-                    animate={{ width: `${stat.value}%` }}
-                    transition={{ duration: 1.5, delay: 0.5 }}
-                    className={`h-full bg-gradient-to-r ${stat.color} rounded-full`}
-                  />
+                <div className="divide-y divide-white/5">
+                  {planes.slice(0, 15).map((plan, idx) => (
+                    <motion.div
+                      key={plan.id}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: idx * 0.04 }}
+                      className="p-4 hover:bg-orange-500/5 transition-colors flex items-center justify-between"
+                    >
+                      <div className="flex items-center gap-4 min-w-0">
+                        <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
+                          plan.dias_restantes < 0 ? 'bg-red-500 animate-pulse' : plan.dias_restantes <= 1 ? 'bg-yellow-500' : 'bg-green-500'
+                        }`} />
+                        <div className="min-w-0">
+                          <p className="text-sm text-white font-medium truncate">{plan.equipo_nombre}</p>
+                          <p className="text-xs text-gray-500">
+                            {plan.tipo_lubricante || 'Sin lubricante'} • {plan.cantidad_gramos || 0}g
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3 flex-shrink-0">
+                        <StatusBadge
+                          status={`Nivel ${plan.criticidad}`}
+                          variant={plan.criticidad === 'A' ? 'danger' : plan.criticidad === 'B' ? 'warning' : 'info'}
+                        />
+                        <span className={`text-sm font-bold ${
+                          plan.dias_restantes < 0 ? 'text-red-400' : plan.dias_restantes <= 1 ? 'text-yellow-400' : 'text-green-400'
+                        }`}>
+                          {plan.dias_restantes < 0 ? `${Math.abs(plan.dias_restantes)}d atraso` : `${plan.dias_restantes}d`}
+                        </span>
+                      </div>
+                    </motion.div>
+                  ))}
                 </div>
               )}
-            </GlassCard>
-          )
-        })}
-      </motion.div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Consumption Chart */}
-        <motion.div variants={itemVariants}>
-          <GlassCard className="p-6">
-            <h3 className="text-lg font-semibold text-white mb-6">Consumo por Tipo de Lubricante</h3>
-            <div className="space-y-5">
-              {consumptionData.map((item, index) => (
-                <motion.div
-                  key={item.name}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                >
-                  <div className="flex justify-between text-sm mb-2">
-                    <span className="text-gray-300">{item.name}</span>
-                    <span className="text-orange-400 font-medium">{item.percentage}%</span>
-                  </div>
-                  <div className="h-2.5 bg-gray-700 rounded-full overflow-hidden">
-                    <motion.div
-                      initial={{ width: 0 }}
-                      animate={{ width: `${item.percentage}%` }}
-                      transition={{ duration: 1, delay: 0.3 + index * 0.1 }}
-                      className={`h-full ${item.color} rounded-full`}
-                    />
-                  </div>
-                </motion.div>
-              ))}
             </div>
-          </GlassCard>
-        </motion.div>
-
-        {/* Upcoming Activities */}
-        <motion.div variants={itemVariants}>
-          <GlassCard className="p-6">
-            <h3 className="text-lg font-semibold text-white mb-6">Próximas Actividades</h3>
-            <div className="space-y-3">
-              {upcomingActivities.map((activity, index) => (
-                <motion.div
-                  key={activity.id}
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                  whileHover={{ scale: 1.02, x: 4 }}
-                  className={`flex items-center justify-between p-4 rounded-lg bg-white/5 border-l-4 ${activity.border} hover:bg-white/10 cursor-pointer transition-all duration-300`}
-                >
-                  <div>
-                    <p className="text-sm font-medium text-white">{activity.id} - {activity.equipment}</p>
-                    <p className="text-xs text-gray-400 mt-1">{activity.message}</p>
-                  </div>
-                  <button className={`text-xs px-3 py-1 rounded border ${
-                    activity.status === 'urgent' ? 'bg-red-500/20 text-red-400 border-red-500/30' :
-                    activity.status === 'upcoming' ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' :
-                    'bg-blue-500/20 text-blue-400 border-blue-500/30'
-                  }`}>
-                    {activity.status === 'urgent' ? 'Urgente' : activity.status === 'upcoming' ? 'Próximo' : 'Programado'}
-                  </button>
-                </motion.div>
-              ))}
-            </div>
-          </GlassCard>
-        </motion.div>
+          </GlassPanel>
+        </div>
       </div>
-    </motion.div>
+    </div>
   )
 }
