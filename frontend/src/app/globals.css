@@ -11,14 +11,12 @@
     --success: #10b981;
   }
 
-  * {
-    @apply border-border;
-  }
-
   body {
-    @apply bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50;
-    @apply text-foreground;
-    @apply font-sans antialiased;
+    background: linear-gradient(to bottom right, #eff6ff, #faf5ff, #fdf2f8);
+    color: var(--foreground);
+    font-family: ui-sans-serif, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
     position: relative;
     min-height: 100vh;
   }
@@ -49,31 +47,74 @@
 
 @layer components {
   .glass-card {
-    @apply bg-white/15 backdrop-blur-glass border border-white/20 rounded-glass shadow-glass;
-    @apply hover:shadow-glow transition-all duration-300;
+    background-color: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s;
+  }
+
+  .glass-card:hover {
+    box-shadow: 0 0 20px rgba(0, 102, 204, 0.4);
   }
 
   .glass-input {
-    @apply bg-white/10 backdrop-blur-glass border border-white/20 rounded-lg;
-    @apply focus:border-blue-400 focus:ring-2 focus:ring-blue-400/30;
-    @apply transition-all duration-200;
+    background-color: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 0.5rem;
+    transition: all 0.2s;
+  }
+
+  .glass-input:focus {
+    border-color: #60a5fa;
+    outline: none;
+    ring: 2px rgba(96, 165, 250, 0.3);
+    box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.3);
   }
 
   .glass-button {
-    @apply bg-gradient-to-r from-blue-500 to-blue-600 text-white;
-    @apply backdrop-blur-glass border border-white/20 rounded-lg;
-    @apply hover:from-blue-600 hover:to-blue-700;
-    @apply active:scale-95 transition-all duration-200;
-    @apply shadow-lg hover:shadow-glow;
+    background: linear-gradient(to right, #3b82f6, #2563eb);
+    color: white;
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 0.5rem;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s;
+  }
+
+  .glass-button:hover {
+    background: linear-gradient(to right, #2563eb, #1d4ed8);
+    box-shadow: 0 0 20px rgba(0, 102, 204, 0.4);
+  }
+
+  .glass-button:active {
+    transform: scale(0.95);
   }
 
   .glass-button-ghost {
-    @apply bg-white/10 backdrop-blur-glass border border-white/20 rounded-lg;
-    @apply hover:bg-white/20 transition-all duration-200;
+    background-color: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 0.5rem;
+    transition: all 0.2s;
+  }
+
+  .glass-button-ghost:hover {
+    background-color: rgba(255, 255, 255, 0.2);
   }
 
   .glass-button-danger {
-    @apply bg-red-500/20 backdrop-blur-glass border border-red-500/30 rounded-lg text-red-600;
-    @apply hover:bg-red-500/30 transition-all duration-200;
+    background-color: rgba(239, 68, 68, 0.2);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 0.5rem;
+    color: #dc2626;
+    transition: all 0.2s;
+  }
+
+  .glass-button-danger:hover {
+    background-color: rgba(239, 68, 68, 0.3);
   }
 }
