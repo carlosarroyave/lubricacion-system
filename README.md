@@ -1,193 +1,92 @@
-# 🔧 Sistema de Gestión de Lubricación Industrial
+# LubeTrack Pro — Sistema de Gestión de Lubricación Industrial
 
-Sistema profesional y escalable de gestión de lubricación para equipos industriales, construido con tecnología moderna y arquitectura de microservicios.
+Sistema de gestión y seguimiento de lubricación para equipos industriales. Permite planificar, ejecutar y registrar lubricaciones según estándares de mantenimiento predictivo.
 
-## 🎯 Características
+## Funcionalidades
 
-- **Gestión de Equipos**: Registrar, editar y monitorear equipos de lubricación
-- **Planes Automáticos**: Generación automática de planes de lubricación basados en criticidad
-- **Historial Completo**: Registro detallado de todas las lubricaciones realizadas
-- **Calculadora SKF**: Cálculo automático de cantidades según norma SKF
-- **Alertas Inteligentes**: Sistema de alertas para lubricaciones vencidas o próximas
-- **Reportes**: Exportación de datos en CSV
-- **Interfaz Moderna**: Frontend con diseño Glassmorphism y animaciones fluidas
-- **API RESTful**: Backend profesional con FastAPI
+- **Planes de Lubricación** — Visualización de planes próximos y vencidos, con ejecución desde la interfaz.
+- **Gestión de Equipos** — CRUD completo de equipos con criticidad (A/B/C), ubicación, modelo de rodamiento y parámetros de lubricación.
+- **Historial** — Registro detallado de todas las lubricaciones ejecutadas (técnico, cantidad, observaciones).
+- **Calculadora SKF** — Cálculo automático de cantidad de grasa según fórmula SKF (`G = 0.005 × D × B`).
+- **Dashboard** — Resumen operativo: equipos activos, planes vencidos, distribución de criticidad, grasa total aplicada.
+- **Diagnóstico del sistema** — Verificación de estado de la API y la base de datos.
 
-## 🏗️ Stack Tecnológico
+## Stack Tecnológico
 
-### Backend
-- **FastAPI** - Framework web moderno
-- **SQLAlchemy** - ORM para bases de datos
-- **Pydantic** - Validación de datos
-- **PostgreSQL** - Base de datos relacional (via Supabase)
+| Capa | Tecnología |
+|------|-----------|
+| **Backend** | FastAPI · SQLAlchemy · Pydantic · PostgreSQL |
+| **Frontend** | Next.js 14 · TypeScript · Tailwind CSS · Framer Motion |
+| **Base de datos** | PostgreSQL (Supabase) |
 
-### Frontend
-- **Next.js 14** - React framework con App Router
-- **TypeScript** - Type safety
-- **Tailwind CSS** - Utility-first styling
-- **Framer Motion** - Animaciones fluidas
-- **TanStack Query** - State management y data fetching
-- **React Hook Form + Zod** - Validación de formularios
-- **Glassmorphism Design** - UI moderna con efectos glass
+## Estructura del Proyecto
 
-### Cloud
-- **Supabase** - PostgreSQL cloud (GRATIS)
-- **Render.com** - Backend API hosting (GRATIS)
-- **Vercel** - Frontend hosting (GRATIS)
-
-## 🚀 Inicio Rápido - Deploy en la Nube
-
-### Opción 1: Deploy Automático (Recomendado)
-
-👉 **Ver:**
-- [DEPLOY-RAPIDO.md](DEPLOY-RAPIDO.md) para backend
-- [DEPLOY-VERCEL.md](DEPLOY-VERCEL.md) para frontend
-
-**Resumen:**
-1. Crear BD en **Supabase** (5 min)
-2. Deploy backend en **Render.com** (10 min)
-3. Deploy frontend en **Vercel** (5 min)
-4. ¡Listo! Tu app está en vivo
-
-### Opción 2: Local con Docker
-
-```bash
-git clone https://github.com/carlosarroyave/lubricacion-system.git
-cd lubricacion-system
-cp .env.example .env
-docker-compose up
+```
+lubricacion-system/
+├── backend/
+│   ├── app/
+│   │   ├── core/          # config.py, database.py
+│   │   ├── models/        # equipo, plan_lubricacion, historial, usuario
+│   │   ├── routes/        # equipos, lubricacion, health
+│   │   ├── schemas/       # validación Pydantic
+│   │   ├── services/      # lógica de negocio
+│   │   └── main.py
+│   ├── requirements.txt
+│   └── Dockerfile
+├── frontend/
+│   ├── src/
+│   │   ├── app/           # layout, page, globals.css
+│   │   ├── components/    # UI, layout, tabs
+│   │   ├── lib/           # api.ts, utils.ts
+│   │   └── types/         # index.ts
+│   ├── package.json
+│   ├── tailwind.config.ts
+│   └── tsconfig.json
+└── README.md
 ```
 
-Accede a:
-- Frontend: http://localhost:3000
-- API Docs: http://localhost:8000/api/docs
+## API Endpoints
 
-### Opción 3: Local sin Docker
+```
+GET    /api/equipos                         Listar equipos
+POST   /api/equipos                         Crear equipo
+GET    /api/equipos/{id}                    Obtener equipo
+PUT    /api/equipos/{id}                    Actualizar equipo
+DELETE /api/equipos/{id}                    Desactivar equipo
+GET    /api/equipos/{id}/historial          Historial de un equipo
+
+GET    /api/lubricacion/planes/proximos     Planes próximos a vencer
+POST   /api/lubricacion/ejecutar/{plan_id}  Registrar ejecución
+GET    /api/lubricacion/historial           Historial de lubricaciones
+GET    /api/lubricacion/calcular-skf        Calculadora SKF
+
+GET    /api/health                          Estado del sistema
+```
+
+## Desarrollo Local
 
 ```bash
 # Backend
 cd backend
 pip install -r requirements.txt
-uvicorn app.main:app --reload
+uvicorn app.main:app --reload --port 8000
 
-# Frontend (en otro terminal)
+# Frontend (en otra terminal)
 cd frontend
 npm install
 npm run dev
 ```
-uvicorn app.main:app --reload
 
-# Frontend (en otro terminal)
-cd frontend
-pip install -r requirements.txt
-streamlit run app.py
-```
+Variables de entorno necesarias:
 
-## 📊 Endpoints de API
+- `DATABASE_URL` — URI de conexión a PostgreSQL
+- `SECRET_KEY` — Clave secreta para la API
+- `NEXT_PUBLIC_API_URL` — URL del backend (en frontend/.env.local)
 
-```
-GET  /api/equipos              # Listar equipos
-POST /api/equipos              # Crear equipo
-GET  /api/equipos/{id}         # Obtener equipo
-PUT  /api/equipos/{id}         # Actualizar equipo
-DELETE /api/equipos/{id}       # Eliminar equipo
+## Licencia
 
-GET  /api/lubricacion/planes/proximos        # Planes próximos
-POST /api/lubricacion/ejecutar/{plan_id}     # Registrar ejecución
-GET  /api/lubricacion/historial              # Historial
-GET  /api/lubricacion/calcular-skf           # Calcular SKF
+MIT — ver [LICENSE](LICENSE)
 
-GET  /api/health               # Health check
-```
-
-Documentación interactiva: `/api/docs` (Swagger UI)
-
-## 📁 Estructura del Proyecto
-
-```
-lubricacion-system/
-├── backend/                 # FastAPI + SQLAlchemy
-│   ├── app/
-│   │   ├── core/           # Database, Config
-│   │   ├── models.py       # Modelos ORM
-│   │   ├── main.py         # Aplicación
-│   │   └── __init__.py
-│   ├── requirements.txt
-│   └── Dockerfile
-├── frontend/               # Streamlit
-│   ├── app.py             # Aplicación principal
-│   ├── requirements.txt
-│   └── .streamlit/config.toml
-├── docker-compose.yml      # Orquestación
-├── DEPLOY-RAPIDO.md       # ⭐ GUÍA DE DEPLOY
-└── README.md
-```
-
-## 🔐 Configuración de Seguridad
-
-### Variables de Entorno (`.env`)
-
-```env
-# Base de datos
-DATABASE_URL=postgresql://...
-
-# API
-SECRET_KEY=your-secret-key-2026
-API_TITLE=Gestión de Lubricación API
-API_VERSION=1.0.0
-```
-
-### En Producción
-- ✅ Cambiar SECRET_KEY
-- ✅ Usar HTTPS
-- ✅ Configurar CORS específicamente
-- ✅ Backups regulares de BD
-- ✅ Variables sensibles en secrets/environment
-
-## 🐛 Desarrollo
-
-### Crear rama de feature
-```bash
-git checkout -b feature/mi-feature
-```
-
-### Testing
-```bash
-cd backend
-pytest
-```
-
-### Commit
-```bash
-git commit -m "feat: descripción del cambio"
-git push origin feature/mi-feature
-```
-
-## 📄 Licencia
-
-MIT License - Ver [LICENSE](LICENSE)
-
-## 👤 Autor
+## Autor
 
 **Carlos Arroyave**
-- GitHub: [@carlosarroyave](https://github.com/carlosarroyave)
-- Sistema de Lubricación Industrial v1.0
-
-## 🤝 Contribuir
-
-Las contribuciones son bienvenidas. Por favor sigue estas reglas:
-1. Fork el proyecto
-2. Crea una rama para tu feature
-3. Commit tus cambios
-4. Push a la rama
-5. Abre un Pull Request
-
-## 📞 Soporte
-
-Para soporte o reportar bugs, abre un issue en GitHub.
-
----
-
-**Versión:** 1.0.0  
-**Última actualización:** Febrero 2026  
-**Estado:** ✅ Listo para producción

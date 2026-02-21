@@ -61,6 +61,3 @@ logs/
 *.db
 *.sqlite3
 postgres_data/
-
-# Streamlit
-.streamlit/secrets.toml
