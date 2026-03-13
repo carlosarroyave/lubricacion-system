@@ -8,8 +8,9 @@ from fastapi.middleware.cors import CORSMiddleware
 import logging
 
 from backend.app.core.config import settings
-from backend.app.core.database import init_db
+from backend.app.core.database import init_db, engine
 from backend.app.routes import health
+from sqlalchemy import text
 
 # Configurar logging
 logging.basicConfig(
@@ -44,6 +45,18 @@ async def startup_event():
     logger.info("Inicializando aplicación...")
     try:
         init_db()
+        # Migrate: add planta column if it doesn't exist
+        with engine.connect() as conn:
+            result = conn.execute(text(
+                "SELECT column_name FROM information_schema.columns "
+                "WHERE table_name='equipos' AND column_name='planta'"
+            ))
+            if result.fetchone() is None:
+                conn.execute(text(
+                    "ALTER TABLE equipos ADD COLUMN planta VARCHAR(10) NOT NULL DEFAULT 'TREN_1'"
+                ))
+                conn.commit()
+                logger.info("Columna 'planta' agregada a la tabla equipos")
         logger.info("Base de datos inicializada correctamente")
     except Exception as e:
         logger.error(f"Error al inicializar base de datos: {str(e)}")

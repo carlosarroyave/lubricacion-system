@@ -6,7 +6,7 @@ import { GlassCard } from '@/components/ui/GlassCard'
 import { GlassPanel } from '@/components/ui/GlassPanel'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { AnimatedCounter } from '@/components/ui/AnimatedCounter'
-import { PlanProximo } from '@/types'
+import { PlanProximo, Planta } from '@/types'
 import { getPlanesProximos, ejecutarLubricacion } from '@/lib/api'
 import { formatDate } from '@/lib/utils'
 import {
@@ -22,7 +22,11 @@ import {
   X,
 } from 'lucide-react'
 
-export function PlanesTab() {
+interface PlanesTabProps {
+  planta: Planta
+}
+
+export function PlanesTab({ planta }: PlanesTabProps) {
   const [planes, setPlanes] = useState<PlanProximo[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -37,14 +41,14 @@ export function PlanesTab() {
     setLoading(true)
     setError(null)
     try {
-      const data = await getPlanesProximos(diasFiltro)
+      const data = await getPlanesProximos(diasFiltro, planta)
       setPlanes(data)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al cargar los planes')
     } finally {
       setLoading(false)
     }
-  }, [diasFiltro])
+  }, [diasFiltro, planta])
 
   useEffect(() => {
     fetchPlanes()

@@ -6,7 +6,7 @@ import { GlassCard } from '@/components/ui/GlassCard'
 import { GlassPanel } from '@/components/ui/GlassPanel'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { AnimatedCounter } from '@/components/ui/AnimatedCounter'
-import { Equipo, EquipoCreate, EquipoUpdate, Criticidad, EstadoEquipo } from '@/types'
+import { Equipo, EquipoCreate, EquipoUpdate, Criticidad, EstadoEquipo, Planta } from '@/types'
 import { getEquipos, createEquipo, updateEquipo, deleteEquipo } from '@/lib/api'
 import { formatDate } from '@/lib/utils'
 import {
@@ -26,18 +26,22 @@ import {
 const CRITICIDAD_OPTIONS: Criticidad[] = ['A', 'B', 'C']
 const ESTADO_OPTIONS: EstadoEquipo[] = ['ACTIVO', 'INACTIVO', 'MANTENIMIENTO']
 
-const emptyForm: EquipoCreate = {
-  nombre: '',
-  componente: '',
-  criticidad: 'B',
-  ubicacion: '',
-  modelo_rodamiento: '',
-  tipo_lubricante: '',
-  cantidad_gramos: 0,
-  frecuencia_dias: 30,
+interface EquiposTabProps {
+  planta: Planta
 }
 
-export function EquiposTab() {
+export function EquiposTab({ planta }: EquiposTabProps) {
+  const emptyForm: EquipoCreate = {
+    nombre: '',
+    planta,
+    componente: '',
+    criticidad: 'B',
+    ubicacion: '',
+    modelo_rodamiento: '',
+    tipo_lubricante: '',
+    cantidad_gramos: 0,
+    frecuencia_dias: 30,
+  }
   const [equipos, setEquipos] = useState<Equipo[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -56,14 +60,14 @@ export function EquiposTab() {
     setLoading(true)
     setError(null)
     try {
-      const data = await getEquipos(0, 100)
+      const data = await getEquipos(0, 100, planta)
       setEquipos(data)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al cargar equipos')
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [planta])
 
   useEffect(() => { fetchEquipos() }, [fetchEquipos])
 
@@ -91,6 +95,7 @@ export function EquiposTab() {
     setEditingEquipo(eq)
     setFormData({
       nombre: eq.nombre,
+      planta: eq.planta,
       componente: eq.componente,
       criticidad: eq.criticidad,
       ubicacion: eq.ubicacion,

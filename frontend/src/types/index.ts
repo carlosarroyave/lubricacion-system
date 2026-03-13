@@ -3,12 +3,19 @@
 // Enums matching backend
 export type Criticidad = 'A' | 'B' | 'C'
 export type EstadoEquipo = 'ACTIVO' | 'INACTIVO' | 'MANTENIMIENTO'
+export type Planta = 'TREN_1' | 'TREN_2'
 export type TabType = 'planes' | 'equipos' | 'historial' | 'herramientas' | 'dashboard'
+
+export const PLANTA_LABELS: Record<Planta, string> = {
+  TREN_1: 'Tren 1',
+  TREN_2: 'Tren 2',
+}
 
 // Equipo - matches backend Equipo model & EquipoResponse schema
 export interface Equipo {
   id: number
   nombre: string
+  planta: Planta
   componente: string | null
   criticidad: Criticidad
   ubicacion: string | null
@@ -24,6 +31,7 @@ export interface Equipo {
 // Create/Update payloads matching backend schemas
 export interface EquipoCreate {
   nombre: string
+  planta: Planta
   componente?: string | null
   criticidad?: Criticidad
   ubicacion?: string | null
@@ -35,6 +43,7 @@ export interface EquipoCreate {
 
 export interface EquipoUpdate {
   nombre?: string
+  planta?: Planta
   componente?: string | null
   criticidad?: Criticidad
   ubicacion?: string | null
@@ -63,6 +72,7 @@ export interface PlanProximo {
   id: number
   equipo_id: number
   equipo_nombre: string
+  equipo_planta: Planta
   criticidad: Criticidad
   tipo_lubricante: string | null
   cantidad_gramos: number | null

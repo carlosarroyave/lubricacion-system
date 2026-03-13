@@ -6,7 +6,7 @@ import { GlassCard } from '@/components/ui/GlassCard'
 import { GlassPanel } from '@/components/ui/GlassPanel'
 import { AnimatedCounter } from '@/components/ui/AnimatedCounter'
 import { StatusBadge } from '@/components/ui/StatusBadge'
-import { Equipo, PlanProximo, Historial } from '@/types'
+import { Equipo, PlanProximo, Historial, Planta, PLANTA_LABELS } from '@/types'
 import { getEquipos, getPlanesProximos, getHistorial } from '@/lib/api'
 import {
   LayoutDashboard,
@@ -22,7 +22,11 @@ import {
   RefreshCw,
 } from 'lucide-react'
 
-export function DashboardTab() {
+interface DashboardTabProps {
+  planta: Planta
+}
+
+export function DashboardTab({ planta }: DashboardTabProps) {
   const [equipos, setEquipos] = useState<Equipo[]>([])
   const [planes, setPlanes] = useState<PlanProximo[]>([])
   const [historial, setHistorial] = useState<Historial[]>([])
@@ -34,9 +38,9 @@ export function DashboardTab() {
     setError(null)
     try {
       const [eqs, pls, hist] = await Promise.all([
-        getEquipos(0, 100),
-        getPlanesProximos(30),
-        getHistorial(undefined, 100),
+        getEquipos(0, 100, planta),
+        getPlanesProximos(30, planta),
+        getHistorial(undefined, 100, planta),
       ])
       setEquipos(eqs)
       setPlanes(pls)
@@ -46,7 +50,7 @@ export function DashboardTab() {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [planta])
 
   useEffect(() => { fetchAll() }, [fetchAll])
 
@@ -87,7 +91,7 @@ export function DashboardTab() {
             <LayoutDashboard className="w-5 h-5 text-orange-400" />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-white">Dashboard</h2>
+            <h2 className="text-xl font-bold text-white">Dashboard — {PLANTA_LABELS[planta]}</h2>
             <p className="text-sm text-gray-400">Resumen general del sistema</p>
           </div>
         </div>

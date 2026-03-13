@@ -42,11 +42,14 @@ class EquipoService:
             raise
     
     @staticmethod
-    def obtener_equipos(db: Session, skip: int = 0, limit: int = 50) -> list:
-        """Obtener lista de equipos activos"""
-        return db.query(Equipo).filter(
+    def obtener_equipos(db: Session, skip: int = 0, limit: int = 50, planta: str = None) -> list:
+        """Obtener lista de equipos activos, opcionalmente filtrados por planta"""
+        query = db.query(Equipo).filter(
             Equipo.estado == "ACTIVO"
-        ).offset(skip).limit(limit).all()
+        )
+        if planta:
+            query = query.filter(Equipo.planta == planta)
+        return query.offset(skip).limit(limit).all()
     
     @staticmethod
     def obtener_equipo_por_id(db: Session, equipo_id: int) -> Equipo:

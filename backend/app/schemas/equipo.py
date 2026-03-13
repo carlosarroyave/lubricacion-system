@@ -11,8 +11,13 @@ class CriticidadEnum(str, Enum):
     MEDIA = "B"
     BAJA = "C"
 
+class PlantaEnum(str, Enum):
+    TREN_1 = "TREN_1"
+    TREN_2 = "TREN_2"
+
 class EquipoBase(BaseModel):
     nombre: str = Field(..., min_length=1, max_length=150)
+    planta: PlantaEnum = PlantaEnum.TREN_1
     componente: Optional[str] = None
     criticidad: CriticidadEnum = CriticidadEnum.BAJA
     ubicacion: Optional[str] = None
@@ -26,6 +31,7 @@ class EquipoCreate(EquipoBase):
 
 class EquipoUpdate(BaseModel):
     nombre: Optional[str] = None
+    planta: Optional[PlantaEnum] = None
     componente: Optional[str] = None
     criticidad: Optional[CriticidadEnum] = None
     ubicacion: Optional[str] = None

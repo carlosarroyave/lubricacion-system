@@ -17,10 +17,11 @@ router = APIRouter(
 def listar_equipos(
     skip: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=100),
+    planta: str = Query(None),
     db: Session = Depends(get_db)
 ):
-    """Listar todos los equipos activos"""
-    equipos = EquipoService.obtener_equipos(db, skip=skip, limit=limit)
+    """Listar todos los equipos activos, opcionalmente filtrados por planta"""
+    equipos = EquipoService.obtener_equipos(db, skip=skip, limit=limit, planta=planta)
     return equipos
 
 @router.get("/{equipo_id}", response_model=EquipoResponse)

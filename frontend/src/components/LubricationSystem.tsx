@@ -4,30 +4,59 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Navbar } from '@/components/layout/Navbar'
 import { BackgroundOrbs } from '@/components/layout/BackgroundOrbs'
+import { PlantSelector } from '@/components/PlantSelector'
 import { PlanesTab } from '@/components/tabs/PlanesTab'
 import { EquiposTab } from '@/components/tabs/EquiposTab'
 import { HistorialTab } from '@/components/tabs/HistorialTab'
 import { HerramientasTab } from '@/components/tabs/HerramientasTab'
 import { DashboardTab } from '@/components/tabs/DashboardTab'
-import { TabType } from '@/types'
-
-const tabComponents: Record<TabType, React.ComponentType> = {
-  planes: PlanesTab,
-  equipos: EquiposTab,
-  historial: HistorialTab,
-  herramientas: HerramientasTab,
-  dashboard: DashboardTab,
-}
+import { TabType, Planta } from '@/types'
 
 export function LubricationSystem() {
   const [activeTab, setActiveTab] = useState<TabType>('planes')
-  const ActiveComponent = tabComponents[activeTab]
+  const [selectedPlanta, setSelectedPlanta] = useState<Planta | null>(null)
+
+  const handleSelectPlanta = (planta: Planta) => {
+    setSelectedPlanta(planta)
+    setActiveTab('planes')
+  }
+
+  const handleChangePlanta = () => {
+    setSelectedPlanta(null)
+  }
+
+  // Show plant selector if no plant selected
+  if (!selectedPlanta) {
+    return <PlantSelector onSelect={handleSelectPlanta} />
+  }
+
+  const renderTab = () => {
+    switch (activeTab) {
+      case 'planes':
+        return <PlanesTab planta={selectedPlanta} />
+      case 'equipos':
+        return <EquiposTab planta={selectedPlanta} />
+      case 'historial':
+        return <HistorialTab planta={selectedPlanta} />
+      case 'herramientas':
+        return <HerramientasTab />
+      case 'dashboard':
+        return <DashboardTab planta={selectedPlanta} />
+      default:
+        return <PlanesTab planta={selectedPlanta} />
+    }
+  }
 
   return (
     <div className="min-h-screen bg-dark-900 text-white relative overflow-hidden">
       <BackgroundOrbs />
       <div className="relative z-10">
-        <Navbar activeTab={activeTab} onTabChange={setActiveTab} />
+        <Navbar
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          planta={selectedPlanta}
+          onChangePlanta={handleChangePlanta}
+        />
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <AnimatePresence mode="wait">
             <motion.div
@@ -37,7 +66,7 @@ export function LubricationSystem() {
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.3 }}
             >
-              <ActiveComponent />
+              {renderTab()}
             </motion.div>
           </AnimatePresence>
         </main>

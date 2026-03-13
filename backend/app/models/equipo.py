@@ -17,11 +17,16 @@ class EstadoEnum(str, enum.Enum):
     INACTIVO = "INACTIVO"
     MANTENIMIENTO = "MANTENIMIENTO"
 
+class PlantaEnum(str, enum.Enum):
+    TREN_1 = "TREN_1"
+    TREN_2 = "TREN_2"
+
 class Equipo(Base):
     __tablename__ = "equipos"
     
     id = Column(Integer, primary_key=True, index=True)
     nombre = Column(String(150), unique=True, nullable=False, index=True)
+    planta = Column(Enum(PlantaEnum), default=PlantaEnum.TREN_1, nullable=False, index=True)
     componente = Column(String(150), nullable=True)
     criticidad = Column(Enum(CriticidadEnum), default=CriticidadEnum.BAJA, nullable=False)
     ubicacion = Column(String(200), nullable=True)

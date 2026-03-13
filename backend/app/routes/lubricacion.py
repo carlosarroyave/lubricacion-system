@@ -17,10 +17,11 @@ router = APIRouter(
 @router.get("/planes/proximos")
 def obtener_planes_proximos(
     dias: int = Query(7, ge=1, le=30),
+    planta: str = Query(None),
     db: Session = Depends(get_db)
 ):
     """Obtener planes próximos a vencer"""
-    planes = LubricacionService.obtener_planes_proximos(db, dias=dias)
+    planes = LubricacionService.obtener_planes_proximos(db, dias=dias, planta=planta)
     
     resultado = []
     for plan in planes:
@@ -29,6 +30,7 @@ def obtener_planes_proximos(
             "id": plan.id,
             "equipo_id": plan.equipo_id,
             "equipo_nombre": plan.equipo.nombre,
+            "equipo_planta": plan.equipo.planta,
             "criticidad": plan.equipo.criticidad,
             "tipo_lubricante": plan.tipo_lubricante,
             "cantidad_gramos": plan.cantidad_gramos,
@@ -57,11 +59,12 @@ def ejecutar_lubricacion(
 @router.get("/historial")
 def obtener_historial(
     plan_id: int = Query(None),
+    planta: str = Query(None),
     limit: int = Query(50, ge=1, le=100),
     db: Session = Depends(get_db)
 ):
     """Obtener historial de lubricaciones"""
-    historial = LubricacionService.obtener_historial(db, plan_id=plan_id, limit=limit)
+    historial = LubricacionService.obtener_historial(db, plan_id=plan_id, planta=planta, limit=limit)
     return historial
 
 @router.get("/calcular-skf")

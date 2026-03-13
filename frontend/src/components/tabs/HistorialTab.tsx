@@ -5,7 +5,7 @@ import { motion } from 'framer-motion'
 import { GlassCard } from '@/components/ui/GlassCard'
 import { GlassPanel } from '@/components/ui/GlassPanel'
 import { AnimatedCounter } from '@/components/ui/AnimatedCounter'
-import { Historial } from '@/types'
+import { Historial, Planta } from '@/types'
 import { getHistorial } from '@/lib/api'
 import { formatDate } from '@/lib/utils'
 import {
@@ -21,7 +21,11 @@ import {
   FileText,
 } from 'lucide-react'
 
-export function HistorialTab() {
+interface HistorialTabProps {
+  planta: Planta
+}
+
+export function HistorialTab({ planta }: HistorialTabProps) {
   const [historial, setHistorial] = useState<Historial[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -32,14 +36,14 @@ export function HistorialTab() {
     setLoading(true)
     setError(null)
     try {
-      const data = await getHistorial(undefined, limit)
+      const data = await getHistorial(undefined, limit, planta)
       setHistorial(data)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al cargar historial')
     } finally {
       setLoading(false)
     }
-  }, [limit])
+  }, [limit, planta])
 
   useEffect(() => { fetchHistorial() }, [fetchHistorial])
 

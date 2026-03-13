@@ -2,6 +2,7 @@ import {
   Equipo,
   EquipoCreate,
   EquipoUpdate,
+  Planta,
   PlanProximo,
   Historial,
   HistorialCreate,
@@ -31,8 +32,10 @@ async function fetchAPI<T>(endpoint: string, options?: RequestInit): Promise<T> 
 
 // ==================== EQUIPOS ====================
 
-export async function getEquipos(skip = 0, limit = 50): Promise<Equipo[]> {
-  return fetchAPI<Equipo[]>(`/api/equipos?skip=${skip}&limit=${limit}`)
+export async function getEquipos(skip = 0, limit = 50, planta?: Planta): Promise<Equipo[]> {
+  const params = new URLSearchParams({ skip: String(skip), limit: String(limit) })
+  if (planta) params.set('planta', planta)
+  return fetchAPI<Equipo[]>(`/api/equipos?${params}`)
 }
 
 export async function getEquipo(id: number): Promise<Equipo> {
@@ -63,8 +66,10 @@ export async function getHistorialEquipo(equipoId: number): Promise<Historial[]>
 
 // ==================== PLANES DE LUBRICACIÓN ====================
 
-export async function getPlanesProximos(dias = 7): Promise<PlanProximo[]> {
-  return fetchAPI<PlanProximo[]>(`/api/lubricacion/planes/proximos?dias=${dias}`)
+export async function getPlanesProximos(dias = 7, planta?: Planta): Promise<PlanProximo[]> {
+  const params = new URLSearchParams({ dias: String(dias) })
+  if (planta) params.set('planta', planta)
+  return fetchAPI<PlanProximo[]>(`/api/lubricacion/planes/proximos?${params}`)
 }
 
 // ==================== EJECUCIÓN / HISTORIAL ====================
@@ -76,9 +81,10 @@ export async function ejecutarLubricacion(planId: number, data: Omit<HistorialCr
   })
 }
 
-export async function getHistorial(planId?: number, limit = 50): Promise<Historial[]> {
+export async function getHistorial(planId?: number, limit = 50, planta?: Planta): Promise<Historial[]> {
   const params = new URLSearchParams({ limit: String(limit) })
   if (planId) params.set('plan_id', String(planId))
+  if (planta) params.set('planta', planta)
   return fetchAPI<Historial[]>(`/api/lubricacion/historial?${params}`)
 }
 

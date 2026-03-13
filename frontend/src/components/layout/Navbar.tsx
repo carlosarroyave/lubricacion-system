@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { cn } from '@/lib/utils'
-import { TabType } from '@/types'
+import { TabType, Planta, PLANTA_LABELS } from '@/types'
 import { 
   Droplets, 
   Settings, 
@@ -11,12 +11,16 @@ import {
   Wrench,
   LayoutDashboard,
   Menu,
-  X
+  X,
+  Factory,
+  ArrowLeftRight,
 } from 'lucide-react'
 
 interface NavbarProps {
   activeTab: TabType
   onTabChange: (tab: TabType) => void
+  planta: Planta
+  onChangePlanta: () => void
 }
 
 const tabs: { id: TabType; label: string; icon: React.ElementType }[] = [
@@ -27,8 +31,10 @@ const tabs: { id: TabType; label: string; icon: React.ElementType }[] = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
 ]
 
-export function Navbar({ activeTab, onTabChange }: NavbarProps) {
+export function Navbar({ activeTab, onTabChange, planta, onChangePlanta }: NavbarProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+
+  const plantaColor = planta === 'TREN_1' ? 'orange' : 'blue'
 
   return (
     <motion.nav 
@@ -38,20 +44,42 @@ export function Navbar({ activeTab, onTabChange }: NavbarProps) {
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          <button
-            onClick={() => onTabChange('planes')}
-            className="flex items-center space-x-3 group"
-          >
-            <motion.div 
-              whileHover={{ rotate: 15 }}
-              className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center shadow-lg shadow-orange-500/20"
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => onTabChange('planes')}
+              className="flex items-center space-x-3 group"
             >
-              <Droplets className="w-5 h-5 text-white" />
-            </motion.div>
-            <span className="text-xl font-bold tracking-tight text-white group-hover:opacity-80 transition-opacity">
-              Lube<span className="bg-gradient-to-r from-orange-400 to-orange-600 bg-clip-text text-transparent">Track</span> Pro
-            </span>
-          </button>
+              <motion.div 
+                whileHover={{ rotate: 15 }}
+                className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center shadow-lg shadow-orange-500/20"
+              >
+                <Droplets className="w-5 h-5 text-white" />
+              </motion.div>
+              <span className="text-xl font-bold tracking-tight text-white group-hover:opacity-80 transition-opacity hidden sm:inline">
+                Lube<span className="bg-gradient-to-r from-orange-400 to-orange-600 bg-clip-text text-transparent">Track</span> Pro
+              </span>
+            </button>
+
+            {/* Plant indicator + switch button */}
+            <div className="flex items-center gap-2">
+              <div className={cn(
+                'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border',
+                planta === 'TREN_1'
+                  ? 'bg-orange-500/15 text-orange-300 border-orange-500/30'
+                  : 'bg-blue-500/15 text-blue-300 border-blue-500/30'
+              )}>
+                <Factory className="w-3.5 h-3.5" />
+                {PLANTA_LABELS[planta]}
+              </div>
+              <button
+                onClick={onChangePlanta}
+                className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 transition-colors"
+                title="Cambiar planta"
+              >
+                <ArrowLeftRight className="w-3.5 h-3.5 text-gray-400" />
+              </button>
+            </div>
+          </div>
           
           <div className="hidden md:flex space-x-1">
             {tabs.map((tab) => {
@@ -130,6 +158,17 @@ export function Navbar({ activeTab, onTabChange }: NavbarProps) {
                 </button>
               )
             })}
+            {/* Mobile: change plant button */}
+            <button
+              onClick={() => {
+                onChangePlanta()
+                setMobileMenuOpen(false)
+              }}
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-gray-400 hover:text-white hover:bg-white/5 transition-colors border-t border-white/10 mt-2 pt-3"
+            >
+              <ArrowLeftRight className="w-4 h-4" />
+              Cambiar Planta
+            </button>
           </div>
         </motion.div>
       )}

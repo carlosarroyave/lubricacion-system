@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
 from backend.app.models.plan_lubricacion import PlanLubricacion
 from backend.app.models.historial import Historial
+from backend.app.models.equipo import Equipo
 from backend.app.schemas.historial import HistorialCreate
 import logging
 
@@ -13,14 +14,18 @@ logger = logging.getLogger(__name__)
 class LubricacionService:
     
     @staticmethod
-    def obtener_planes_proximos(db: Session, dias: int = 7) -> list:
+    def obtener_planes_proximos(db: Session, dias: int = 7, planta: str = None) -> list:
         """Obtener planes de lubricación próximos o vencidos"""
         fecha_limite = datetime.utcnow() + timedelta(days=dias)
         
-        planes = db.query(PlanLubricacion).filter(
+        query = db.query(PlanLubricacion).filter(
             PlanLubricacion.proxima_fecha_lubricacion <= fecha_limite,
             PlanLubricacion.equipo.has(estado="ACTIVO")
-        ).all()
+        )
+        if planta:
+            query = query.filter(PlanLubricacion.equipo.has(Equipo.planta == planta))
+        
+        planes = query.all()
         
         return planes
     
@@ -58,12 +63,15 @@ class LubricacionService:
             raise
     
     @staticmethod
-    def obtener_historial(db: Session, plan_id: int = None, limit: int = 50) -> list:
+    def obtener_historial(db: Session, plan_id: int = None, planta: str = None, limit: int = 50) -> list:
         """Obtener historial de lubricaciones"""
         query = db.query(Historial)
         
         if plan_id:
             query = query.filter(Historial.plan_id == plan_id)
+        
+        if planta:
+            query = query.join(Historial.plan).join(PlanLubricacion.equipo).filter(Equipo.planta == planta)
         
         return query.order_by(Historial.fecha_ejecucion.desc()).limit(limit).all()
     
