@@ -17,7 +17,7 @@ class Settings(BaseSettings):
     API_VERSION: str = "1.0.0"
     API_DESCRIPTION: str = "Sistema profesional de gestión de lubricación industrial"
     
-    # CORS
+    # CORS - origenes permitidos (Vercel subdomains via regex en main.py)
     ALLOWED_ORIGINS: list = [
         "https://lubricacion-system.vercel.app",
         "http://localhost:3000",
