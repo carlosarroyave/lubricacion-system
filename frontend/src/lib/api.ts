@@ -10,7 +10,9 @@ import {
   HealthCheck,
 } from '@/types'
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+// In production, API calls go through Next.js rewrites (same origin, no CORS).
+// In development, NEXT_PUBLIC_API_URL can point to localhost:8000.
+const API_URL = ''
 
 async function fetchAPI<T>(endpoint: string, options?: RequestInit): Promise<T> {
   const url = `${API_URL}${endpoint}`
