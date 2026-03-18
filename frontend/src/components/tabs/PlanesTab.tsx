@@ -7,7 +7,7 @@ import { GlassPanel } from '@/components/ui/GlassPanel'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { AnimatedCounter } from '@/components/ui/AnimatedCounter'
 import { PlanProximo, Planta } from '@/types'
-import { getPlanesProximos, ejecutarLubricacion } from '@/lib/api'
+import { getPlanesProximos, getTodosPlanes, ejecutarLubricacion } from '@/lib/api'
 import { formatDate } from '@/lib/utils'
 import {
   Droplets,
@@ -20,6 +20,8 @@ import {
   User,
   MessageSquare,
   X,
+  Wrench,
+  Search,
 } from 'lucide-react'
 
 interface PlanesTabProps {
@@ -36,6 +38,10 @@ export function PlanesTab({ planta }: PlanesTabProps) {
   const [selectedPlan, setSelectedPlan] = useState<PlanProximo | null>(null)
   const [formData, setFormData] = useState({ tecnico: '', cantidad_aplicada: 0, observaciones: '' })
   const [submitLoading, setSubmitLoading] = useState(false)
+  const [showManualModal, setShowManualModal] = useState(false)
+  const [todosPlanes, setTodosPlanes] = useState<PlanProximo[]>([])
+  const [searchQuery, setSearchQuery] = useState('')
+  const [loadingTodos, setLoadingTodos] = useState(false)
 
   const fetchPlanes = useCallback(async () => {
     setLoading(true)
@@ -57,6 +63,38 @@ export function PlanesTab({ planta }: PlanesTabProps) {
   const vencidos = planes.filter(p => p.dias_restantes < 0)
   const hoy = planes.filter(p => p.dias_restantes >= 0 && p.dias_restantes <= 1)
   const proximos = planes.filter(p => p.dias_restantes > 1)
+
+  const handleOpenManual = async () => {
+    setShowManualModal(true)
+    setLoadingTodos(true)
+    setSearchQuery('')
+    try {
+      const data = await getTodosPlanes(planta)
+      setTodosPlanes(data)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error al cargar equipos')
+    } finally {
+      setLoadingTodos(false)
+    }
+  }
+
+  const handleSearchPlanes = async (query: string) => {
+    setSearchQuery(query)
+    setLoadingTodos(true)
+    try {
+      const data = await getTodosPlanes(planta, query || undefined)
+      setTodosPlanes(data)
+    } catch (err) {
+      // ignore search errors
+    } finally {
+      setLoadingTodos(false)
+    }
+  }
+
+  const handleSelectManualPlan = (plan: PlanProximo) => {
+    setShowManualModal(false)
+    handleEjecutar(plan)
+  }
 
   const handleEjecutar = (plan: PlanProximo) => {
     setSelectedPlan(plan)
@@ -158,14 +196,25 @@ export function PlanesTab({ planta }: PlanesTabProps) {
               ))}
             </div>
           </div>
-          <button
-            onClick={fetchPlanes}
-            disabled={loading}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-orange-500/20 text-orange-300 border border-orange-500/30 hover:bg-orange-500/30 transition-colors text-sm disabled:opacity-50"
-          >
-            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-            Actualizar
-          </button>
+          <div className="flex items-center gap-2">
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={handleOpenManual}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/30 transition-colors text-sm"
+            >
+              <Wrench className="w-4 h-4" />
+              Ejecución Manual
+            </motion.button>
+            <button
+              onClick={fetchPlanes}
+              disabled={loading}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-orange-500/20 text-orange-300 border border-orange-500/30 hover:bg-orange-500/30 transition-colors text-sm disabled:opacity-50"
+            >
+              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+              Actualizar
+            </button>
+          </div>
         </div>
       </GlassPanel>
 
@@ -349,6 +398,99 @@ export function PlanesTab({ planta }: PlanesTabProps) {
                   {submitLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
                   Confirmar Ejecución
                 </motion.button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Modal Selección Manual de Equipo */}
+      <AnimatePresence>
+        {showManualModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+            onClick={() => setShowManualModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-2xl rounded-2xl bg-dark-800/90 backdrop-blur-xl border border-white/10 p-6 max-h-[80vh] flex flex-col"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="text-lg font-semibold text-white">Ejecución Manual</h3>
+                  <p className="text-sm text-gray-400 mt-0.5">Selecciona un equipo para registrar lubricación</p>
+                </div>
+                <button onClick={() => setShowManualModal(false)} className="p-1 rounded-lg hover:bg-white/10 transition-colors">
+                  <X className="w-5 h-5 text-gray-400" />
+                </button>
+              </div>
+
+              {/* Search */}
+              <div className="relative mb-4">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => handleSearchPlanes(e.target.value)}
+                  className="w-full bg-black/30 border border-white/10 rounded-lg pl-10 pr-4 py-2.5 text-white text-sm focus:border-emerald-500/60 focus:outline-none focus:ring-2 focus:ring-emerald-500/10"
+                  placeholder="Buscar equipo por nombre..."
+                  autoFocus
+                />
+              </div>
+
+              {/* List */}
+              <div className="overflow-y-auto flex-1 custom-scrollbar space-y-1.5 min-h-0">
+                {loadingTodos ? (
+                  <div className="flex items-center justify-center py-12">
+                    <Loader2 className="w-6 h-6 text-emerald-400 animate-spin" />
+                  </div>
+                ) : todosPlanes.length === 0 ? (
+                  <div className="text-center py-12">
+                    <Wrench className="w-10 h-10 text-gray-600 mx-auto mb-3" />
+                    <p className="text-sm text-gray-500">No se encontraron planes de lubricación</p>
+                  </div>
+                ) : (
+                  todosPlanes.map((plan) => (
+                    <motion.button
+                      key={plan.id}
+                      whileHover={{ scale: 1.01 }}
+                      whileTap={{ scale: 0.99 }}
+                      onClick={() => handleSelectManualPlan(plan)}
+                      className="w-full flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5 hover:bg-emerald-500/10 hover:border-emerald-500/20 transition-all text-left group"
+                    >
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-white truncate group-hover:text-emerald-200 transition-colors">
+                          {plan.equipo_nombre}
+                        </p>
+                        <p className="text-xs text-gray-500 mt-0.5">
+                          {plan.tipo_lubricante || 'Sin lubricante'} • {plan.cantidad_gramos ? `${plan.cantidad_gramos}g` : '—'} • cada {(plan as any).frecuencia_dias || '—'}d
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2 ml-3 shrink-0">
+                        <StatusBadge
+                          status={`${plan.criticidad}`}
+                          variant={getCriticidadVariant(plan.criticidad)}
+                        />
+                        <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                          plan.dias_restantes < 0
+                            ? 'bg-red-500/20 text-red-300'
+                            : plan.dias_restantes <= 1
+                            ? 'bg-yellow-500/20 text-yellow-300'
+                            : 'bg-green-500/20 text-green-300'
+                        }`}>
+                          {plan.dias_restantes < 0 ? `${Math.abs(plan.dias_restantes)}d atraso` : `${plan.dias_restantes}d`}
+                        </span>
+                        <Droplets className="w-4 h-4 text-emerald-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </div>
+                    </motion.button>
+                  ))
+                )}
               </div>
             </motion.div>
           </motion.div>

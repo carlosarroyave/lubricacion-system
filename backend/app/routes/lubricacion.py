@@ -14,6 +14,38 @@ router = APIRouter(
     responses={404: {"description": "No encontrado"}}
 )
 
+@router.get("/planes/todos")
+def obtener_todos_los_planes(
+    planta: str = Query(None),
+    search: str = Query(None),
+    db: Session = Depends(get_db)
+):
+    """Obtener todos los planes de lubricación (para ejecución manual)"""
+    planes = LubricacionService.obtener_todos_planes(db, planta=planta)
+    
+    resultado = []
+    for plan in planes:
+        dias_restantes = (plan.proxima_fecha_lubricacion - datetime.utcnow()).days
+        nombre = plan.equipo.nombre
+        if search and search.lower() not in nombre.lower():
+            continue
+        resultado.append({
+            "id": plan.id,
+            "equipo_id": plan.equipo_id,
+            "equipo_nombre": nombre,
+            "equipo_planta": plan.equipo.planta,
+            "criticidad": plan.equipo.criticidad,
+            "tipo_lubricante": plan.tipo_lubricante,
+            "cantidad_gramos": plan.cantidad_gramos,
+            "frecuencia_dias": plan.frecuencia_dias,
+            "proxima_fecha": plan.proxima_fecha_lubricacion,
+            "ultima_fecha": plan.ultima_fecha_lubricacion,
+            "dias_restantes": dias_restantes,
+            "estado": "🔴 VENCIDO" if dias_restantes < 0 else "🟡 HOY/MAÑANA" if dias_restantes <= 1 else "🟢 AL DÍA"
+        })
+    
+    return sorted(resultado, key=lambda x: x["equipo_nombre"])
+
 @router.get("/planes/proximos")
 def obtener_planes_proximos(
     dias: int = Query(7, ge=1, le=30),

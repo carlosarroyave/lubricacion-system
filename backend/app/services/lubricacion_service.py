@@ -14,6 +14,16 @@ logger = logging.getLogger(__name__)
 class LubricacionService:
     
     @staticmethod
+    def obtener_todos_planes(db: Session, planta: str = None) -> list:
+        """Obtener todos los planes de lubricación"""
+        query = db.query(PlanLubricacion).filter(
+            PlanLubricacion.equipo.has(estado="ACTIVO")
+        )
+        if planta:
+            query = query.filter(PlanLubricacion.equipo.has(Equipo.planta == planta))
+        return query.all()
+
+    @staticmethod
     def obtener_planes_proximos(db: Session, dias: int = 7, planta: str = None) -> list:
         """Obtener planes de lubricación próximos o vencidos"""
         fecha_limite = datetime.utcnow() + timedelta(days=dias)

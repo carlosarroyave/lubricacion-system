@@ -74,6 +74,13 @@ export async function getPlanesProximos(dias = 7, planta?: Planta): Promise<Plan
   return fetchAPI<PlanProximo[]>(`/api/lubricacion/planes/proximos?${params}`)
 }
 
+export async function getTodosPlanes(planta?: Planta, search?: string): Promise<PlanProximo[]> {
+  const params = new URLSearchParams()
+  if (planta) params.set('planta', planta)
+  if (search) params.set('search', search)
+  return fetchAPI<PlanProximo[]>(`/api/lubricacion/planes/todos?${params}`)
+}
+
 // ==================== EJECUCIÓN / HISTORIAL ====================
 
 export async function ejecutarLubricacion(planId: number, data: Omit<HistorialCreate, 'plan_id'>): Promise<Historial> {
